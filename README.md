@@ -100,7 +100,7 @@ All stateful Vault operations use protected tRPC procedures. The server scopes r
 
 ## Testing and validation
 
-The suite includes server authentication and Vault-router coverage, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, and bounded client failure-copy contracts. The mastery pass verified **27 assertions** across five test files, TypeScript, production build output, authenticated desktop room flows, persisted return state, non-3D restoration, and the access-deck focus boundary. Run the following before a release:
+The suite includes server authentication and Vault-router coverage, a non-destructive clean-state journey, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, and bounded client failure-copy contracts. The mastery pass verified **28 assertions** across five test files, TypeScript, production build output, authenticated desktop room flows, persisted return state, non-3D restoration, and the access-deck focus boundary. Run the following before a release:
 
 ```bash
 pnpm test

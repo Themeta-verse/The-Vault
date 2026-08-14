@@ -47,7 +47,7 @@ The remaining walkthrough assesses interaction clarity, the Prism-to-Sigil relat
 
 ## Release validation evidence
 
-The final release suite passes 27 assertions across authentication, protected Vault routes, progression helpers, wayfinding, malformed input, bounded ARIA-provider recovery, and explicit client-safe failure-copy contracts for Vault-state, ARIA, and preference mutations. Those bounded messages are wired into the corresponding controller handlers. TypeScript completes without errors. The production build completes in approximately eight seconds and retains explicit lazy boundaries for the scene and icon modules. The largest intentional trade-off is the `vault-3d` bundle at 1,015.67 kB minified / 276.29 kB gzip; it is loaded separately from the initial interaction shell to keep the spatial renderer from blocking basic application startup.
+The final release suite passes 28 assertions across authentication, protected Vault routes, a non-destructive clean-state journey, progression helpers, wayfinding, malformed input, bounded ARIA-provider recovery, and explicit client-safe failure-copy contracts for Vault-state, ARIA, and preference mutations. Those bounded messages are wired into the corresponding controller handlers. TypeScript completes without errors. The production build completes in approximately eight seconds and retains explicit lazy boundaries for the scene and icon modules. The largest intentional trade-off is the `vault-3d` bundle at 1,015.67 kB minified / 276.29 kB gzip; it is loaded separately from the initial interaction shell to keep the spatial renderer from blocking basic application startup.
 
 Source and runtime-log review found no active generic dashboard, chat, map, or destination-panel surface in the shipped route. Expected ARIA provider fallback no longer logs noisy server errors, and the client continues to expose a bounded notice rather than an exception trace. The security review is recorded in `SECURITY_FINAL_AUDIT.md`; it confirms protected procedures, user scoping, typed object and room contracts, bounded prompts, schema-validated ARIA actions, and server-only secrets.
 
@@ -56,3 +56,17 @@ The only validation boundary retained in this audit is a fresh-user, device-leve
 The unauthenticated protected-entry viewport was captured at 1280 × 720, 768 × 1024, 390 × 844, and 844 × 390. In each case the arrival signal remained centered, legible, and contained in the fixed viewport without horizontal spill or a scroll stack. These captures verify the shared entry shell at desktop, tablet, mobile portrait, and mobile landscape; they do not substitute for an authenticated handset interaction test of the rendered 3D room.
 
 The owner reported completing the requested authenticated device-layout walkthrough for mobile portrait and landscape. Because the automation cannot capture the connected browser at those device dimensions, the verifiable record remains an authenticated desktop chamber check plus four fixed-viewport unauthenticated entry-shell captures. Concrete authenticated tablet/mobile room captures remain an open release-evidence task. A destructive progression reset remains intentionally out of scope for this owner session.
+
+## Release verification
+
+The final mastery release checkpoint is `7a4aba5c`. The production route at `https://vaultapp-zxzxri4v.manus.space` resolves to THE VAULT’s protected entry experience, including its authentication boundary and persisted-world promise. The synchronized GitHub `main` branch reports the same commit: `7a4aba5cfbe39adf4f76764e0a44d3389f18580a`. The repository worktree was clean immediately after the push.
+
+## Non-destructive clean-state journey coverage
+
+The protected route suite now exercises a clean-state journey without resetting the owner’s stored progression: chamber entry, initial Memory Prism observation and discovery, travel to THE LAB, an ARIA question, Lab materialization, return to the chamber, and a persisted state revisit. All transitions, ARIA recording, and final state retrieval remain owner-scoped. This gives the first-use contract reproducible regression coverage while avoiding destructive manipulation of a live account.
+
+## Final authenticated chamber inspection
+
+After a fresh owner login, the protected development world restored directly into the central chamber with the retained-route cue, first-discovery Prism cue, spatial thresholds, and compact access-deck control available. The expanded deck retained a coherent room route order and grouped environment controls without covering the chamber’s central interaction target. Browser-key attempts to invoke device emulation are delivered to the page rather than Chrome’s device toolbar in this automation environment, so they cannot produce the still-missing authenticated tablet/mobile capture evidence.
+
+No device-toolbar capture was supplied for the final mobile/tablet evidence request. The mastery release therefore does not claim an exported authenticated handheld room capture. It retains authenticated desktop inspection, protected-entry captures at four viewport sizes, responsive source review, and an explicit post-release recommendation to capture a real authenticated handset session before extending the visual system further.

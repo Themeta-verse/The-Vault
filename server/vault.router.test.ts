@@ -166,4 +166,25 @@ describe("THE VAULT protected router", () => {
     expect(db.discoverVaultObject).toHaveBeenCalledWith(7, "object-resonance-needle");
     expect(db.materializeExperiment).toHaveBeenCalledWith(7, 4);
   });
+
+  it("covers a clean-state protected journey from chamber entry through ARIA, destination travel, return, and revisit", async () => {
+    llm.invokeLLM.mockResolvedValue({ choices: [{ message: { content: JSON.stringify({ answer: "The Prism has retained your first observation.", suggestedAction: "none" }) } }] });
+    db.getVaultState.mockResolvedValue({ discoveries: [], artifacts: [], rooms: [{ roomId: "central-chamber" }], roomStates: [] });
+    const caller = appRouter.createCaller(context(user));
+
+    await caller.vault.enterRoom({ roomId: "central-chamber" });
+    await caller.vault.observe({ objectId: "object-memory-prism" });
+    await caller.vault.discover({ objectId: "object-memory-prism" });
+    await caller.vault.enterRoom({ roomId: "lab" });
+    await caller.aria.send({ roomId: "lab", message: "What did the Prism retain?" });
+    await caller.vault.materialize({ noteId: 4 });
+    await caller.vault.enterRoom({ roomId: "central-chamber" });
+    await caller.vault.state();
+
+    expect(db.markRoomVisited).toHaveBeenNthCalledWith(1, 7, "central-chamber");
+    expect(db.markRoomVisited).toHaveBeenNthCalledWith(2, 7, "lab");
+    expect(db.markRoomVisited).toHaveBeenLastCalledWith(7, "central-chamber");
+    expect(db.recordAriaMessage).toHaveBeenCalledWith(7, "lab", "aria", "The Prism has retained your first observation.", "none");
+    expect(db.getVaultState).toHaveBeenCalledWith(7);
+  });
 });
