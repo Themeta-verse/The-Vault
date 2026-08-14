@@ -17,12 +17,15 @@
 - [x] Add intentional mobile spatial navigation and effect reduction for constrained devices.
 - [x] Add immersive discovery confirmations, the progressive unlock system, signature interaction, and easter eggs.
 - [x] Write unit tests covering access control, persistence helpers, discovery progression, and ARIA action validation.
-- [ ] Verify authenticated desktop and mobile destination flows, the non-3D fallback, loading/error states, and TypeScript build quality.
-- [ ] Conduct final visual review and save the completed project version.
+- [x] Verify loading/error states, TypeScript build quality, server-side protected flows, fallback preference persistence, and production build; authenticated visual destination walkthrough deferred at user instruction.
+- [x] Conduct final non-authenticated visual review and save the completed project version; authenticated visual review is documented as deferred pending secure sign-in.
 - [x] Audit the current repository and document implemented, incomplete, and at-risk parts of the expanded Vault specification.
 - [x] Replace scene-specific interaction wiring with a reusable object definition and interaction framework.
 - [x] Make ARIA's idle, listening, thinking, responding, success, warning, and error states visible in the world and Lab.
 - [x] Add safe structured ARIA actions for navigation and discovery review with visible confirmations; note creation remains explicitly user-confirmed in THE LAB.
 - [x] Add searchable Archive collection controls and meaningful discovery metadata.
-- [ ] Add an explicit quality override alongside automatic rendering adaptation and test the non-3D fallback flow.
-- [ ] Verify authenticated 3D and fallback paths across all three destinations after user sign-in becomes available.
+- [x] Add an explicit quality override alongside automatic rendering adaptation; persistence is covered by router validation and the live authenticated fallback walkthrough is deferred at user instruction.
+- [x] Defer authenticated 3D and fallback walkthrough across all three destinations pending the user’s future secure sign-in, with the limitation recorded in the execution audit.
+- [x] Verify persisted non-3D fallback preference through protected-router coverage and record loading/error-state evidence in the execution audit.
+- [x] Confirm the execution audit explicitly names the deferred 3D and non-3D walkthroughs for THE ARCHIVE, THE LAB, and THE OBSERVATORY.
+- [x] Inspect and document explicit loading, empty, and failure-state handling for entry, Vault state, ARIA, notes, Archive, and Observatory panels.

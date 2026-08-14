@@ -62,11 +62,13 @@ describe("THE VAULT protected router", () => {
     expect(db.markRoomVisited).not.toHaveBeenCalled();
   });
 
-  it("persists an explicit low-quality preference only for the active Vault owner", async () => {
+  it("persists explicit low-quality and non-3D preferences only for the active Vault owner", async () => {
     const caller = appRouter.createCaller(context(user));
-    await caller.vault.settings({ renderQuality: "low" });
-    expect(db.setVaultSettings).toHaveBeenCalledWith(7, { renderQuality: "low" });
-    expect(db.recordVaultAction).toHaveBeenCalledWith(7, "update_settings", "access_deck", undefined, JSON.stringify({ renderQuality: "low" }));
+    await caller.vault.settings({ renderQuality: "low", preferFallback: true });
+    expect(db.setVaultSettings).toHaveBeenCalledWith(7, { renderQuality: "low", preferFallback: true });
+    expect(db.recordVaultAction).toHaveBeenCalledWith(7, "update_settings", "access_deck", undefined, expect.any(String));
+    const payload = db.recordVaultAction.mock.calls[0]?.[4];
+    expect(JSON.parse(payload ?? "{}")).toEqual({ renderQuality: "low", preferFallback: true });
   });
 
   it("rejects invalid rendering quality before it can reach persistence", async () => {

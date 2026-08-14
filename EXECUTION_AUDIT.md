@@ -13,10 +13,21 @@
 | Accessibility and fallback | Implemented | The access deck provides keyboard navigation, reduced-motion, contrast, render-quality, and non-3D controls. A functional fallback chamber presents all spatial controls as standard buttons. |
 | Quality controls | Implemented | Auto, High, and Low rendering quality modes are persisted per user. Low mode reduces DPR, shadows, antialiasing, and particles. |
 | Automated validation | Passing | `pnpm check`, `pnpm test` (8 assertions), database migration review/application, and `pnpm build` all completed successfully. |
-| Deferred walkthrough | Pending user session | The signed-in visual walkthrough of the chamber, all destinations, and the persisted non-3D toggle requires completion of the secure browser sign-in by the account holder. |
+| Deferred walkthrough | Pending user session | The authenticated 3D and non-3D walkthroughs of **THE ARCHIVE**, **THE LAB**, and **THE OBSERVATORY**, including the persisted fallback toggle, require completion of the secure browser sign-in by the account holder. |
 
 ## First-Release Assessment
 
 The current release is internally coherent and has working persistence, authorization, progression, and destination workflows. The 3D world is intentionally an enhancement rather than the only route through the product: users retain a functional, semantic alternative through the access deck and non-3D chamber.
 
-The outstanding item is not an implementation blocker. It is the final visual confirmation in a real authenticated browser session, which cannot be completed without the account holder’s secure sign-in. The system still surfaces a clear authenticated entry gate and protects all personal Vault data behind that session boundary.
+The outstanding item is not an implementation blocker. It is the final visual confirmation in a real authenticated browser session, which cannot be completed without the account holder’s secure sign-in. The system still surfaces a clear authenticated entry gate and protects all personal Vault data behind that session boundary. The unauthenticated entry page and the authenticated Vault controller each have explicit loading and failure states; ARIA and note workflows surface mutation failures through the in-world status notice. The final task is therefore a session-bound visual walkthrough rather than unhandled failure-path implementation.
+
+## UI State Evidence
+
+| Flow | Verified implementation evidence |
+|---|---|
+| Entry authentication | `Home.tsx` renders a locating state while authentication resolves, a dedicated account entry gate when unauthenticated, and a clear authentication error message when session confirmation fails. |
+| Vault state query | `VaultExperience.tsx` renders a branded loading state while Vault data resolves and a recovery screen with a **Try again** action when the state query errors or is empty. |
+| ARIA and notes | THE LAB disables submit controls during each pending mutation, displays a spinner, maps ARIA to a visible error state on failure, and publishes mutation errors through the live Vault Signal notice. |
+| THE ARCHIVE | The collection shows separate empty states for no discoveries and no search matches, while the inspection panel provides a no-active-artifact fallback. |
+| THE OBSERVATORY | Vault History includes an explicit first-entry empty state when no events have yet been recorded. |
+| Fallback path | A persisted `preferFallback` setting selects the functional semantic chamber; route protection and persistence are covered by the server test suite. |
