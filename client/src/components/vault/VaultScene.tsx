@@ -1,10 +1,12 @@
-import { Detailed, Environment, Html, Sparkles } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Html, Sparkles } from "@react-three/drei";
 import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { AriaState, InteractiveObjectDefinition, RoomId, VaultObjectId } from "./types";
 import { centralChamberObjects } from "./sceneInteractions";
 import { getWayfindingVector } from "./wayfinding";
+
+type ArchiveArtifact = { id: string; objectId: string; title: string; category: string; accent: string };
 
 type VaultSceneProps = {
   room: RoomId;
@@ -17,192 +19,48 @@ type VaultSceneProps = {
   objectStates: Record<string, string>;
   worldSignal: "dormant" | "awakened" | "resonant" | "mastered";
   isReturnVisit: boolean;
+  archiveArtifacts: ArchiveArtifact[];
   onActivate: (objectId: VaultObjectId) => void;
+  onInspectArtifact: (artifactId: string) => void;
+  onToggleCatalog: () => void;
+  onFocusAria: () => void;
+  onExitRoom: () => void;
 };
 
 const roomCamera: Record<RoomId, [number, number, number]> = {
-  "central-chamber": [0, 4.5, 12],
-  archive: [-13, 3.5, 7],
-  lab: [13, 3.5, 7],
-  observatory: [0, 9, -11],
+  "central-chamber": [0, 4.8, 14.2], archive: [-1.5, 3.25, 14.8], lab: [0, 3.4, 14.2], observatory: [0, 5.4, 14.8],
 };
-
 const roomTarget: Record<RoomId, [number, number, number]> = {
-  "central-chamber": [0, 1.2, 0],
-  archive: [-7, 1.2, -2],
-  lab: [7, 1.2, -2],
-  observatory: [0, 3, -7],
+  "central-chamber": [0, 1.8, -1.6], archive: [0, 2.3, -2.9], lab: [0, 2.0, -2.7], observatory: [0, 4.2, -4.8],
 };
 
-function CameraRig({ room, reducedMotion, worldSignal }: { room: RoomId; reducedMotion: boolean; worldSignal: VaultSceneProps["worldSignal"] }) {
+function CameraRig({ room, reducedMotion }: { room: RoomId; reducedMotion: boolean }) {
   const camera = useThree(state => state.camera as THREE.PerspectiveCamera);
-  const target = useRef(new THREE.Vector3());
-  useFrame((_, delta) => {
-    const position = room === "central-chamber" && worldSignal !== "dormant" ? [0, worldSignal === "mastered" ? 5.2 : 4.8, worldSignal === "resonant" ? 10.8 : 11.5] as [number, number, number] : roomCamera[room];
-    const aim = roomTarget[room];
-    const step = reducedMotion ? 1 : 1 - Math.exp(-delta * 2.8);
-    camera.position.lerp(new THREE.Vector3(...position), step);
-    target.current.lerp(new THREE.Vector3(...aim), step);
-    camera.lookAt(target.current);
-  });
+  const target = useRef(new THREE.Vector3(...roomTarget[room]));
+  useFrame((_, delta) => { const step = reducedMotion ? 1 : 1 - Math.exp(-delta * 2.15); camera.position.lerp(new THREE.Vector3(...roomCamera[room]), step); target.current.lerp(new THREE.Vector3(...roomTarget[room]), step); camera.lookAt(target.current); });
   return null;
 }
+function WorldLabel({ title, caption, muted = false }: { title: string; caption: string; muted?: boolean }) { return <div className={`world-label ${muted ? "world-label--muted" : ""}`}><span>{caption}</span>{title}</div>; }
+function StoneFloor({ tint = "#171915" }: { tint?: string }) { return <><mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[45, 45]} /><meshStandardMaterial color={tint} roughness={0.94} metalness={0.08} /></mesh><gridHelper args={[38, 38, "#273027", "#20261f"]} position={[0, 0.012, 0]} /></>; }
+function VaultPillar({ position, height = 7 }: { position: [number, number, number]; height?: number }) { return <group position={position}><mesh position={[0, height / 2, 0]} castShadow receiveShadow><boxGeometry args={[0.72, height, 0.72]} /><meshStandardMaterial color="#272722" roughness={0.82} metalness={0.24} /></mesh><mesh position={[0, 0.22, 0]}><cylinderGeometry args={[0.78, 0.92, 0.44, 6]} /><meshStandardMaterial color="#3a382e" roughness={0.76} /></mesh><mesh position={[0, height - 0.18, 0]}><cylinderGeometry args={[0.87, 0.68, 0.36, 6]} /><meshStandardMaterial color="#3a382e" roughness={0.7} metalness={0.18} /></mesh></group>; }
 
-function Portal({ position, title, caption, objectId, locked, color, onActivate }: { position: [number, number, number]; title: string; caption: string; objectId: VaultObjectId; locked: boolean; color: string; onActivate: (id: VaultObjectId) => void }) {
-  const [hovered, setHovered] = useState(false);
-  const ring = useRef<THREE.Mesh>(null);
-  useFrame((_, delta) => {
-    if (ring.current) ring.current.rotation.z += delta * (hovered ? 0.28 : 0.07);
-  });
-  return (
-    <group position={position} onClick={event => { event.stopPropagation(); onActivate(objectId); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
-      <mesh ref={ring}>
-        <torusGeometry args={[2.05, 0.11, 12, 48]} />
-        <meshStandardMaterial color={locked ? "#53504a" : color} emissive={locked ? "#161513" : color} emissiveIntensity={hovered && !locked ? 1.4 : locked ? 0.05 : 0.38} roughness={0.36} metalness={0.82} />
-      </mesh>
-      <mesh position={[0, 0, -0.18]}>
-        <cylinderGeometry args={[1.55, 1.55, 0.14, 32]} />
-        <meshStandardMaterial color={locked ? "#171715" : "#11100d"} roughness={0.92} metalness={0.45} />
-      </mesh>
-      <Html center position={[0, -2.7, 0]} distanceFactor={15} style={{ pointerEvents: "none" }}>
-        <div className={`world-label ${locked ? "world-label--locked" : ""}`}><span>{locked ? "SEALED" : caption}</span>{title}</div>
-      </Html>
-    </group>
-  );
-}
+function ChamberArchitecture({ signalColor, signalStrength }: { signalColor: string; signalStrength: number }) { return <><StoneFloor /><mesh position={[0, 5.9, -4]} receiveShadow><boxGeometry args={[20, 0.48, 15]} /><meshStandardMaterial color="#1f211c" roughness={0.83} metalness={0.2} /></mesh>{([-9.4, -5.8, 5.8, 9.4] as number[]).map(x => <VaultPillar key={x} position={[x, 0, -4.2]} height={7} />)}{([-7.8, 7.8] as number[]).map(x => <VaultPillar key={x} position={[x, 0, 4.8]} height={5.4} />)}<mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[2.3, 4.65, 80]} /><meshStandardMaterial color="#484233" emissive={signalColor} emissiveIntensity={0.19 + signalStrength * 0.04} roughness={0.44} metalness={0.68} /></mesh><mesh position={[0, 0.16, 0]}><cylinderGeometry args={[2.25, 2.6, 0.32, 64]} /><meshStandardMaterial color="#2b2d27" roughness={0.64} metalness={0.4} /></mesh>{[0, 1, 2, 3].map(step => <mesh key={step} position={[0, 0.14 + step * 0.2, -8.9 - step * 0.45]}><boxGeometry args={[5.8 - step * 0.32, 0.2, 0.8]} /><meshStandardMaterial color="#22241e" roughness={0.85} /></mesh>)}<pointLight position={[0, 5.2, 0]} intensity={signalStrength} color={signalColor} distance={17} /></>; }
 
-function MemoryPrism({ definition, discovered, onActivate }: { definition: InteractiveObjectDefinition; discovered: boolean; onActivate: () => void }) {
-  const group = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
-  useFrame(({ clock }, delta) => {
-    if (!group.current) return;
-    group.current.rotation.y += delta * (hovered ? 0.95 : 0.32);
-    group.current.position.y = definition.position[1] + Math.sin(clock.elapsedTime * 1.3) * 0.15;
-  });
-  return (
-    <group ref={group} position={definition.position} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
-      <Detailed distances={[0, 8, 16]}>
-        <mesh><icosahedronGeometry args={[0.95, 3]} /><meshStandardMaterial color={discovered ? "#8c8267" : definition.metadata.accent} emissive={discovered ? "#3e3a2f" : "#9e7b31"} emissiveIntensity={hovered ? 1.5 : 0.7} roughness={0.16} metalness={0.78} /></mesh>
-        <mesh><icosahedronGeometry args={[0.95, 1]} /><meshStandardMaterial color="#baaa7d" emissive="#63512b" emissiveIntensity={0.45} roughness={0.22} metalness={0.7} /></mesh>
-        <mesh><octahedronGeometry args={[0.95, 0]} /><meshStandardMaterial color="#80775e" roughness={0.35} metalness={0.65} /></mesh>
-      </Detailed>
-      <pointLight color="#dfbd6a" intensity={hovered ? 3.1 : 1.1} distance={6} />
-      <Html center position={[0, -1.72, 0]} distanceFactor={15} style={{ pointerEvents: "none" }}><div className="world-label"><span>{discovered ? "RECORDED" : definition.metadata.caption}</span>{definition.metadata.title}</div></Html>
-    </group>
-  );
+function Threshold({ position, title, caption, objectId, locked, accent, onActivate }: { position: [number, number, number]; title: string; caption: string; objectId: VaultObjectId; locked: boolean; accent: string; onActivate: (id: VaultObjectId) => void }) {
+  const [hovered, setHovered] = useState(false); const aperture = useRef<THREE.Mesh>(null); useFrame((_, delta) => { if (aperture.current) aperture.current.rotation.z += delta * (hovered ? 0.16 : 0.025); }); const color = locked ? "#4d5047" : accent;
+  return <group position={position} onClick={event => { event.stopPropagation(); onActivate(objectId); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}><mesh position={[0, 1.2, 0]}><boxGeometry args={[4.2, 4.6, 0.5]} /><meshStandardMaterial color="#25261f" roughness={0.78} metalness={0.28} /></mesh><mesh ref={aperture} position={[0, 1.2, 0.3]}><torusGeometry args={[1.48, 0.12, 12, 64]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={locked ? 0.05 : hovered ? 1.2 : 0.36} roughness={0.26} metalness={0.88} /></mesh><mesh position={[0, 1.2, 0.1]}><circleGeometry args={[1.32, 48]} /><meshStandardMaterial color={locked ? "#121412" : "#161815"} emissive={color} emissiveIntensity={locked ? 0 : hovered ? 0.22 : 0.06} roughness={0.82} /></mesh>{!locked && <pointLight position={[0, 1.4, 1.4]} color={accent} intensity={hovered ? 2.4 : 0.75} distance={5} />}<Html center position={[0, -0.45, 0.5]} distanceFactor={16} style={{ pointerEvents: "none" }}><WorldLabel title={title} caption={locked ? "THRESHOLD SEALED" : caption} muted={locked} /></Html></group>;
 }
+function MemoryPrism({ definition, discovered, onActivate }: { definition: InteractiveObjectDefinition; discovered: boolean; onActivate: () => void }) { const group = useRef<THREE.Group>(null); const [hovered, setHovered] = useState(false); useFrame(({ clock }, delta) => { if (!group.current) return; group.current.rotation.y += delta * (hovered ? 0.7 : 0.18); group.current.position.y = definition.position[1] + Math.sin(clock.elapsedTime * 0.85) * 0.08; }); return <group ref={group} position={definition.position} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}><mesh><octahedronGeometry args={[1.04, 2]} /><meshStandardMaterial color="#bcb6a0" emissive={discovered ? "#4d5c53" : definition.metadata.accent} emissiveIntensity={hovered ? 1.12 : discovered ? 0.2 : 0.58} roughness={0.18} metalness={0.74} /></mesh><mesh scale={1.14}><wireframeGeometry args={[new THREE.OctahedronGeometry(1.04, 1)]} /><meshBasicMaterial color={definition.metadata.accent} transparent opacity={hovered ? 0.75 : 0.32} /></mesh><pointLight color={definition.metadata.accent} intensity={hovered ? 2.2 : 0.7} distance={4.5} /><Html center position={[0, -1.63, 0]} distanceFactor={16} style={{ pointerEvents: "none" }}><WorldLabel title="MEMORY PRISM" caption={discovered ? "RETAINED" : "UNRESOLVED"} /></Html></group>; }
+function EchoSigil({ definition, onActivate }: { definition: InteractiveObjectDefinition; onActivate: () => void }) { const ring = useRef<THREE.Mesh>(null); const [hovered, setHovered] = useState(false); useFrame((_, delta) => { if (ring.current) ring.current.rotation.z += delta * (hovered ? 0.62 : 0.12); }); return <group position={definition.position} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}><mesh ref={ring}><torusKnotGeometry args={[0.43, 0.075, 88, 11]} /><meshStandardMaterial color="#b9d2bd" emissive="#6f9d7c" emissiveIntensity={hovered ? 1.45 : 0.62} roughness={0.2} metalness={0.88} /></mesh><pointLight color="#9ac8a7" intensity={hovered ? 1.9 : 0.55} distance={3.4} /><Html center position={[0, -0.8, 0]} distanceFactor={16} style={{ pointerEvents: "none" }}><WorldLabel title="ECHO SIGIL" caption="ANOMALOUS REPLY" /></Html></group>; }
+function ResonanceNeedle({ definition, onActivate }: { definition: InteractiveObjectDefinition; onActivate: () => void }) { const group = useRef<THREE.Group>(null); const [hovered, setHovered] = useState(false); useFrame(({ clock }, delta) => { if (!group.current) return; group.current.rotation.y += delta * (hovered ? 0.68 : 0.15); group.current.position.y = definition.position[1] + Math.sin(clock.elapsedTime) * 0.06; }); return <group ref={group} position={definition.position} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}><mesh rotation={[0, 0, Math.PI / 4]}><coneGeometry args={[0.14, 1.45, 8]} /><meshStandardMaterial color="#b99cd2" emissive="#7a5595" emissiveIntensity={hovered ? 1.7 : 0.8} roughness={0.18} metalness={0.92} /></mesh><pointLight color="#ba8fd6" intensity={hovered ? 2.2 : 0.7} distance={4} /><Html center position={[0, -0.92, 0]} distanceFactor={16} style={{ pointerEvents: "none" }}><WorldLabel title="RESONANCE NEEDLE" caption="CIRCUIT COMPLETE" /></Html></group>; }
+function AriaVessel({ position, ariaState, onActivate, scale = 1 }: { position: [number, number, number]; ariaState: AriaState; onActivate: () => void; scale?: number }) { const entity = useRef<THREE.Group>(null); const [hovered, setHovered] = useState(false); const visual: Record<AriaState, string> = { idle: "#877b9a", listening: "#a997d4", thinking: "#ccae75", responding: "#c4a1e3", success: "#85b99b", warning: "#d69d67", error: "#bd7373" }; useFrame(({ clock }, delta) => { if (!entity.current) return; entity.current.rotation.y += delta * (hovered ? 0.38 : 0.1); entity.current.position.y = position[1] + Math.sin(clock.elapsedTime * 1.1) * 0.09; }); return <group ref={entity} position={position} scale={scale} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}><mesh><dodecahedronGeometry args={[0.68, 1]} /><meshStandardMaterial color="#d6d2cf" emissive={visual[ariaState]} emissiveIntensity={hovered ? 1.9 : 0.9} roughness={0.18} metalness={0.82} /></mesh><mesh scale={1.8}><icosahedronGeometry args={[0.74, 1]} /><meshBasicMaterial color={visual[ariaState]} wireframe transparent opacity={0.28} /></mesh><pointLight color={visual[ariaState]} intensity={hovered ? 2.5 : 1.0} distance={5} /><Html center position={[0, -1.3, 0]} distanceFactor={16} style={{ pointerEvents: "none" }}><WorldLabel title="ARIA" caption={ariaState === "thinking" ? "COMPOSING" : "CONTAINED INTELLIGENCE"} /></Html></group>; }
+function WayfindingBeacon({ worldSignal, isReturnVisit }: { worldSignal: VaultSceneProps["worldSignal"]; isReturnVisit: boolean }) { const target = getWayfindingVector(worldSignal, isReturnVisit); return <group position={target.position}><mesh rotation={[Math.PI / 2, 0, 0]}><ringGeometry args={[0.72, 0.79, 32]} /><meshBasicMaterial color={isReturnVisit ? "#a8c4aa" : "#c7a968"} transparent opacity={0.68} /></mesh><Html center position={[0, .64, 0]} distanceFactor={18} style={{ pointerEvents: "none" }}><WorldLabel title={target.label} caption={target.mode === "return" ? "RETURN VECTOR" : "RESONANCE VECTOR"} /></Html></group>; }
 
-function EchoSigil({ definition, onActivate }: { definition: InteractiveObjectDefinition; onActivate: () => void }) {
-  const group = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
-  useFrame((_, delta) => { if (group.current) group.current.rotation.z += delta * (hovered ? 0.5 : 0.15); });
-  return <group ref={group} position={definition.position} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
-    <mesh><torusKnotGeometry args={[0.42, 0.07, 72, 10]} /><meshStandardMaterial color={definition.metadata.accent} emissive="#527d67" emissiveIntensity={hovered ? 1.7 : 0.65} metalness={0.84} roughness={0.2} /></mesh>
-    <pointLight color="#91c3a6" intensity={hovered ? 2 : 0.7} distance={3} />
-    <Html center position={[0, -0.72, 0]} distanceFactor={15} style={{ pointerEvents: "none" }}><div className="world-label"><span>{definition.metadata.caption}</span>{definition.metadata.title}</div></Html>
-  </group>;
-}
-
-function ResonanceNeedle({ definition, onActivate }: { definition: InteractiveObjectDefinition; onActivate: () => void }) {
-  const group = useRef<THREE.Group>(null);
-  const [hovered, setHovered] = useState(false);
-  useFrame(({ clock }, delta) => {
-    if (!group.current) return;
-    group.current.rotation.y += delta * (hovered ? 0.9 : 0.22);
-    group.current.position.y = definition.position[1] + Math.sin(clock.elapsedTime * 1.15) * 0.1;
-  });
-  return <group ref={group} position={definition.position} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
-    <mesh rotation={[0, 0, Math.PI / 4]}><coneGeometry args={[0.14, 1.3, 8]} /><meshStandardMaterial color={definition.metadata.accent} emissive="#5d3769" emissiveIntensity={hovered ? 1.9 : 0.9} metalness={0.9} roughness={0.18} /></mesh>
-    <pointLight color={definition.metadata.accent} intensity={hovered ? 2.5 : 0.9} distance={4} />
-    <Html center position={[0, -0.92, 0]} distanceFactor={15} style={{ pointerEvents: "none" }}><div className="world-label"><span>{definition.metadata.caption}</span>{definition.metadata.title}</div></Html>
-  </group>;
-}
-
-function WayfindingBeacon({ worldSignal, isReturnVisit }: { worldSignal: VaultSceneProps["worldSignal"]; isReturnVisit: boolean }) {
-  const target = getWayfindingVector(worldSignal, isReturnVisit);
-  return <group position={target.position}>
-    <mesh rotation={[Math.PI / 2, 0, 0]}><ringGeometry args={[0.78, 0.82, 32]} /><meshBasicMaterial color={isReturnVisit ? "#b8d7ae" : "#d4b66b"} transparent opacity={0.62} /></mesh>
-    <pointLight color={isReturnVisit ? "#b8d7ae" : "#d4b66b"} intensity={isReturnVisit ? 1.35 : 0.85} distance={3.5} />
-    <Html center position={[0, .72, 0]} distanceFactor={16} style={{ pointerEvents: "none" }}><div className="world-label"><span>{target.mode === "return" ? "RETURN VECTOR" : "NEXT VECTOR"}</span>{target.label}</div></Html>
-  </group>;
-}
-
-function AriaEntity({ definition, ariaState, onActivate }: { definition: InteractiveObjectDefinition; ariaState: AriaState; onActivate: () => void }) {
-  const mesh = useRef<THREE.Mesh>(null);
-  const [hovered, setHovered] = useState(false);
-  const stateVisual: Record<AriaState, { color: string; intensity: number; label: string }> = {
-    idle: { color: "#745c7c", intensity: 0.9, label: "IDLE" },
-    listening: { color: "#8c79b7", intensity: 1.15, label: "LISTENING" },
-    thinking: { color: "#d3ab68", intensity: 1.7, label: "THINKING" },
-    responding: { color: "#bb8fd0", intensity: 1.8, label: "RESPONDING" },
-    success: { color: "#7fbda1", intensity: 1.6, label: "SIGNAL CONFIRMED" },
-    warning: { color: "#d4a265", intensity: 1.35, label: "CAUTION" },
-    error: { color: "#bf6e6e", intensity: 1.25, label: "SIGNAL INTERRUPTED" },
-  };
-  const visual = stateVisual[ariaState];
-  useFrame(({ clock }, delta) => {
-    if (!mesh.current) return;
-    mesh.current.rotation.x += delta * 0.17;
-    mesh.current.rotation.z += delta * 0.22;
-    mesh.current.position.y = 2.15 + Math.cos(clock.elapsedTime * 1.8) * 0.13;
-  });
-  return (
-    <group position={definition.position} onClick={event => { event.stopPropagation(); onActivate(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
-      <mesh ref={mesh}><dodecahedronGeometry args={[0.56, 1]} /><meshStandardMaterial color="#d9ccd9" emissive={visual.color} emissiveIntensity={hovered ? visual.intensity + 1.1 : visual.intensity} metalness={0.85} roughness={0.2} /></mesh>
-      <pointLight color={visual.color} intensity={hovered ? visual.intensity + 1.2 : visual.intensity} distance={4} />
-      <Html center position={[0, -0.8, 0]} distanceFactor={15} style={{ pointerEvents: "none" }}><div className="world-label"><span>{visual.label}</span>{definition.metadata.title}</div></Html>
-    </group>
-  );
-}
-
-function Chamber({ room, discoveredObjectIds, unlockedRoomIds, reducedMotion, lowPower, renderQuality, ariaState, objectStates, worldSignal, isReturnVisit, onActivate }: VaultSceneProps) {
-  const observatoryUnlocked = unlockedRoomIds.includes("observatory");
-  const discoveredPrism = discoveredObjectIds.includes("object-memory-prism");
-  const discoveredEchoSigil = discoveredObjectIds.includes("object-echo-sigil");
-  const prismDefinition = centralChamberObjects.find(object => object.id === "object-memory-prism");
-  const echoDefinition = centralChamberObjects.find(object => object.id === "object-echo-sigil");
-  const needleDefinition = centralChamberObjects.find(object => object.id === "object-resonance-needle");
-  const ariaDefinition = centralChamberObjects.find(object => object.id === "aria-entity");
-  const accent = useMemo(() => room === "lab" ? "#75567e" : room === "observatory" ? "#5d927e" : room === "archive" ? "#d0b679" : "#b28d4d", [room]);
-  const signalColor = worldSignal === "mastered" ? "#b889d1" : worldSignal === "resonant" ? "#87bca0" : worldSignal === "awakened" ? "#d6ad62" : accent;
-  const signalStrength = worldSignal === "mastered" ? 3.45 : worldSignal === "resonant" ? 3.05 : worldSignal === "awakened" ? 2.75 : 2.4;
-  return (
-    <>
-      <color attach="background" args={["#0a0a08"]} />
-      <fog attach="fog" args={["#0a0a08", 12, 34]} />
-      <ambientLight intensity={worldSignal === "dormant" ? (isReturnVisit ? 0.42 : 0.34) : 0.47} color={worldSignal === "dormant" ? (isReturnVisit ? "#b9c3ae" : "#c5bda8") : signalColor} />
-      <directionalLight position={[4, 10, 5]} intensity={1.25} color="#d8c59d" castShadow />
-      <pointLight position={[0, 7, 0]} intensity={signalStrength} color={signalColor} distance={18} />
-      <group>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[34, 34]} /><meshStandardMaterial color="#151510" roughness={0.77} metalness={0.38} /></mesh>
-        <mesh position={[0, -0.12, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[2.2, 6.1, 96]} /><meshStandardMaterial color="#332d20" emissive={signalColor} emissiveIntensity={worldSignal === "dormant" ? 0.25 : 0.52} roughness={0.48} metalness={0.78} /></mesh>
-        <mesh position={[0, 5.7, 0]}><cylinderGeometry args={[6.3, 6.3, 0.3, 48]} /><meshStandardMaterial color="#1a1914" roughness={0.6} metalness={0.55} /></mesh>
-        {[-1, 1].map(side => <mesh key={side} position={[side * 9.5, 2.8, -3]} rotation={[0, side * 0.32, 0]}><boxGeometry args={[0.95, 6, 12]} /><meshStandardMaterial color="#1b1a15" roughness={0.78} metalness={0.42} /></mesh>)}
-      </group>
-      {room === "central-chamber" ? <>
-        {centralChamberObjects.filter(object => object.type === "portal").map(portal => <Portal key={portal.id} position={portal.position} title={portal.metadata.title} caption={portal.metadata.caption} objectId={portal.id} locked={portal.id === "door-observatory" && !observatoryUnlocked} color={portal.metadata.accent} onActivate={onActivate} />)}
-        {prismDefinition && <MemoryPrism definition={prismDefinition} discovered={discoveredPrism} onActivate={() => onActivate(prismDefinition.id)} />}
-        {prismDefinition && echoDefinition && objectStates["object-memory-prism"] === "understood" && !discoveredEchoSigil && <EchoSigil definition={echoDefinition} onActivate={() => onActivate(echoDefinition.id)} />}
-        {needleDefinition && objectStates["object-resonance-needle"] === "unlocked" && !discoveredObjectIds.includes("object-resonance-needle") && <ResonanceNeedle definition={needleDefinition} onActivate={() => onActivate(needleDefinition.id)} />}
-        {ariaDefinition && <AriaEntity definition={ariaDefinition} ariaState={ariaState} onActivate={() => onActivate(ariaDefinition.id)} />}
-        <WayfindingBeacon worldSignal={worldSignal} isReturnVisit={isReturnVisit} />
-        {isReturnVisit && <Html center position={[0, 5.1, -1.7]} distanceFactor={15} style={{ pointerEvents: "none" }}><div className="world-label"><span>VAULT HISTORY UPDATED</span>RETURN SIGNAL DETECTED</div></Html>}
-      </> : <>
-        <mesh position={[0, 1.2, -2]}><cylinderGeometry args={[1.45, 1.45, 2.4, 32]} /><meshStandardMaterial color="#27231b" emissive={accent} emissiveIntensity={0.2} roughness={0.4} metalness={0.82} /></mesh>
-        <mesh position={[0, 2.7, -2]} rotation={[0.5, 0.4, 0]}><octahedronGeometry args={[0.78, 2]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.8} metalness={0.84} roughness={0.15} /></mesh>
-        <Html center position={[0, 0.25, 0]} distanceFactor={13} style={{ pointerEvents: "none" }}><div className="world-label"><span>ACTIVE ENVIRONMENT</span>{room === "archive" ? "THE ARCHIVE" : room === "lab" ? "THE LAB" : "THE OBSERVATORY"}</div></Html>
-      </>}
-      {!reducedMotion && !lowPower && <Sparkles count={renderQuality === "high" ? 65 : 38} scale={[19, 6, 16]} size={1.4} speed={0.12} color={worldSignal === "dormant" ? "#e1c98c" : signalColor} noise={0.8} />}
-      <Environment preset="warehouse" />
-    </>
-  );
-}
-
-export default function VaultScene(props: VaultSceneProps) {
-  return (
-    <Canvas dpr={props.lowPower ? 1 : props.renderQuality === "high" ? [1, 2] : [1, 1.5]} gl={{ antialias: !props.lowPower, powerPreference: "high-performance" }} camera={{ position: [0, 4.5, 12], fov: 45 }} shadows={!props.lowPower}>
-      <CameraRig room={props.room} reducedMotion={props.reducedMotion} worldSignal={props.worldSignal} />
-      <Chamber {...props} />
-    </Canvas>
-  );
-}
+function CentralChamber(props: VaultSceneProps) { const observatoryUnlocked = props.unlockedRoomIds.includes("observatory"); const prism = centralChamberObjects.find(item => item.id === "object-memory-prism"); const echo = centralChamberObjects.find(item => item.id === "object-echo-sigil"); const needle = centralChamberObjects.find(item => item.id === "object-resonance-needle"); const signalColor = props.worldSignal === "mastered" ? "#b990d0" : props.worldSignal === "resonant" ? "#89bda0" : props.worldSignal === "awakened" ? "#d3ae68" : "#71806e"; return <><ChamberArchitecture signalColor={signalColor} signalStrength={props.worldSignal === "dormant" ? 1.65 : 2.95} /><Threshold position={[-6.7, 0, -3.9]} title="THE ARCHIVE" caption="SHELVES BEYOND" objectId="door-archive" locked={false} accent="#a9a275" onActivate={props.onActivate} /><Threshold position={[6.7, 0, -3.9]} title="THE LAB" caption="WORKBENCH BEYOND" objectId="door-lab" locked={false} accent="#896e9b" onActivate={props.onActivate} /><Threshold position={[0, 1.5, -10.1]} title="THE OBSERVATORY" caption="NORTHWARD ASCENT" objectId="door-observatory" locked={!observatoryUnlocked} accent="#72a28b" onActivate={props.onActivate} />{prism && <MemoryPrism definition={prism} discovered={props.discoveredObjectIds.includes(prism.id)} onActivate={() => props.onActivate(prism.id)} />}{echo && props.objectStates["object-memory-prism"] === "understood" && !props.discoveredObjectIds.includes(echo.id) && <EchoSigil definition={echo} onActivate={() => props.onActivate(echo.id)} />}{needle && props.objectStates["object-resonance-needle"] === "unlocked" && !props.discoveredObjectIds.includes(needle.id) && <ResonanceNeedle definition={needle} onActivate={() => props.onActivate(needle.id)} />}<AriaVessel position={[3.7, 1.5, 1.5]} ariaState={props.ariaState} onActivate={() => props.onActivate("aria-entity")} /><WayfindingBeacon worldSignal={props.worldSignal} isReturnVisit={props.isReturnVisit} /></>; }
+function ArchiveArtifact({ artifact, position, onInspectArtifact }: { artifact: ArchiveArtifact; position: [number, number, number]; onInspectArtifact: (id: string) => void }) { const [hovered, setHovered] = useState(false); const object = useRef<THREE.Group>(null); useFrame((_, delta) => { if (object.current) object.current.rotation.y += delta * (hovered ? 0.55 : 0.08); }); return <group ref={object} position={position} onClick={event => { event.stopPropagation(); onInspectArtifact(artifact.id); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}><mesh><dodecahedronGeometry args={[0.42, 1]} /><meshStandardMaterial color="#c7c7b0" emissive={artifact.accent} emissiveIntensity={hovered ? 1.32 : 0.34} roughness={0.22} metalness={0.78} /></mesh><pointLight color={artifact.accent} intensity={hovered ? 1.3 : 0.35} distance={2.4} /><Html center position={[0, -0.72, 0]} distanceFactor={18} style={{ pointerEvents: "none" }}><WorldLabel title={artifact.title} caption={artifact.category} /></Html></group>; }
+function RoomExit({ title, position, onExit }: { title: string; position: [number, number, number]; onExit: () => void }) { const [hovered, setHovered] = useState(false); return <group position={position} onClick={event => { event.stopPropagation(); onExit(); }} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}><mesh position={[0, 1.65, 0]}><boxGeometry args={[3.5, 3.3, 0.38]} /><meshStandardMaterial color="#20221d" roughness={0.86} /></mesh><mesh position={[0, 1.65, 0.25]}><torusGeometry args={[1.08, 0.09, 8, 48]} /><meshStandardMaterial color="#9aa78b" emissive="#829675" emissiveIntensity={hovered ? 1.1 : 0.3} roughness={0.25} metalness={0.86} /></mesh><Html center position={[0, -0.12, 0]} distanceFactor={17} style={{ pointerEvents: "none" }}><WorldLabel title={title} caption="PASSAGE HOME" /></Html></group>; }
+function ArchiveRoom({ artifacts, onInspectArtifact, onToggleCatalog, onExit }: { artifacts: ArchiveArtifact[]; onInspectArtifact: (id: string) => void; onToggleCatalog: () => void; onExit: () => void }) { return <><StoneFloor tint="#171914" /><ambientLight intensity={0.48} color="#d2cfbd" /><directionalLight position={[-6, 9, 5]} intensity={1.25} color="#d4c89c" castShadow />{([-7.2, -3.6, 3.6, 7.2] as number[]).map(x => <VaultPillar key={x} position={[x, 0, -4.4]} height={6.5} />)}{([-6.4, -2.1, 2.1, 6.4] as number[]).map((x, index) => <group key={x} position={[x, 0, -3.8]}><mesh position={[0, 2.05, 0]}><boxGeometry args={[2.9, 4.1, 0.56]} /><meshStandardMaterial color="#24251f" roughness={0.78} metalness={0.24} /></mesh>{[0.8, 1.85, 2.9].map(level => <mesh key={level} position={[0, level, 0.38]}><boxGeometry args={[2.55, 0.12, 0.82]} /><meshStandardMaterial color="#595142" roughness={0.72} /></mesh>)}{artifacts[index] && <ArchiveArtifact artifact={artifacts[index]} position={[0, 2.35, 0.66]} onInspectArtifact={onInspectArtifact} />}</group>)}<group position={[0, 0, -2.4]} onClick={event => { event.stopPropagation(); onToggleCatalog(); }}><mesh position={[0, 1.05, 0]}><cylinderGeometry args={[1.18, 1.35, 2.1, 8]} /><meshStandardMaterial color="#2e3029" roughness={0.56} metalness={0.48} /></mesh><mesh position={[0, 2.16, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.93, 48]} /><meshStandardMaterial color="#93a88e" emissive="#7c9a78" emissiveIntensity={0.55} roughness={0.2} metalness={0.6} /></mesh><Html center position={[0, -0.24, 0]} distanceFactor={17} style={{ pointerEvents: "none" }}><WorldLabel title="CATALOGUE TERMINAL" caption="LOCATE A RECORD" /></Html></group><RoomExit title="CENTRAL CHAMBER" onExit={onExit} position={[0, 0, 5.5]} /></>; }
+function LaboratoryRoom({ ariaState, onFocusAria, onExit }: { ariaState: AriaState; onFocusAria: () => void; onExit: () => void }) { return <><StoneFloor tint="#17161a" /><ambientLight intensity={0.43} color="#c6b7d1" /><pointLight position={[-5, 5, 2]} intensity={2.2} color="#8f6ca3" distance={10} /><mesh position={[0, 0.85, -3.4]}><boxGeometry args={[8.6, 1.7, 2.3]} /><meshStandardMaterial color="#2a2830" roughness={0.6} metalness={0.55} /></mesh><mesh position={[0, 1.76, -3.4]}><boxGeometry args={[7.7, 0.12, 1.85]} /><meshStandardMaterial color="#5a5455" roughness={0.44} metalness={0.4} /></mesh>{([-5.4, 5.4] as number[]).map(x => <VaultPillar key={x} position={[x, 0, -3.8]} height={6.1} />)}{([-2.8, 0, 2.8] as number[]).map((x, index) => <group key={x} position={[x, 1.92, -3.15]}><mesh><cylinderGeometry args={[0.52, 0.64, 0.22, 16]} /><meshStandardMaterial color="#87908d" emissive={index === 1 ? "#b99ed3" : "#759b90"} emissiveIntensity={0.38} roughness={0.28} metalness={0.8} /></mesh><pointLight position={[0, 0.45, 0]} color={index === 1 ? "#b99ed3" : "#8db7a3"} intensity={0.68} distance={2.5} /></group>)}<group position={[0, 0.8, -0.3]}><mesh><cylinderGeometry args={[2.2, 2.5, 1.6, 12]} /><meshStandardMaterial color="#211f26" roughness={0.62} metalness={0.42} /></mesh><mesh position={[0, 0.85, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[1.12, 1.75, 48]} /><meshStandardMaterial color="#9375a3" emissive="#765785" emissiveIntensity={0.42} metalness={0.84} roughness={0.18} /></mesh></group><AriaVessel position={[0, 3.4, -0.25]} ariaState={ariaState} onActivate={onFocusAria} scale={1.16} /><RoomExit title="CENTRAL CHAMBER" onExit={onExit} position={[0, 0, 5.5]} /></>; }
+function ObservatoryRoom({ discoveries, relationships, onExit }: { discoveries: number; relationships: number; onExit: () => void }) { const points = useMemo(() => Array.from({ length: Math.max(6, discoveries + relationships + 2) }, (_, i) => ({ x: Math.sin(i * 2.4) * (2.5 + (i % 3) * 1.25), y: 3.2 + Math.cos(i * 1.74) * 1.65, z: -4.4 - (i % 2) * 1.1 })), [discoveries, relationships]); return <><StoneFloor tint="#131a18" /><ambientLight intensity={0.32} color="#aac5b8" /><pointLight position={[0, 8, -4]} intensity={2.1} color="#83b59f" distance={18} /><mesh position={[0, 1.15, -3.1]}><cylinderGeometry args={[6.6, 7.6, 2.2, 10]} /><meshStandardMaterial color="#1f2926" roughness={0.8} metalness={0.28} /></mesh><mesh position={[0, 2.28, -3.1]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[2.25, 5.6, 96]} /><meshStandardMaterial color="#4a685e" emissive="#548b70" emissiveIntensity={0.28} roughness={0.34} metalness={0.82} /></mesh>{points.map((point, index) => <group key={`${point.x}-${index}`} position={[point.x, point.y, point.z]}><mesh><sphereGeometry args={[0.095 + (index % 3) * 0.04, 16, 16]} /><meshBasicMaterial color={index % 2 ? "#c6e2d0" : "#a6ccb6"} /></mesh></group>)}<Html center position={[0, 4.5, -5.25]} distanceFactor={18} style={{ pointerEvents: "none" }}><WorldLabel title="LIVING CONSTELLATION" caption={`${discoveries} RETAINED · ${relationships} CONNECTED`} /></Html><RoomExit title="CENTRAL CHAMBER" onExit={onExit} position={[0, 0, 5.6]} /></>; }
+function World({ props }: { props: VaultSceneProps }) { const accent = props.room === "archive" ? "#c4ba82" : props.room === "lab" ? "#aa87b6" : props.room === "observatory" ? "#83b99f" : "#aeb38d"; return <><color attach="background" args={[props.room === "observatory" ? "#07100e" : "#0d0f0c"]} /><fog attach="fog" args={[props.room === "observatory" ? "#07100e" : "#0d0f0c", 10, 34]} /><CameraRig room={props.room} reducedMotion={props.reducedMotion} />{props.room === "central-chamber" && <CentralChamber {...props} />}{props.room === "archive" && <ArchiveRoom artifacts={props.archiveArtifacts} onInspectArtifact={props.onInspectArtifact} onToggleCatalog={props.onToggleCatalog} onExit={props.onExitRoom} />}{props.room === "lab" && <LaboratoryRoom ariaState={props.ariaState} onFocusAria={props.onFocusAria} onExit={props.onExitRoom} />}{props.room === "observatory" && <ObservatoryRoom discoveries={props.discoveredObjectIds.length} relationships={props.objectStates["object-echo-sigil"] === "understood" ? 2 : 0} onExit={props.onExitRoom} />}{!props.reducedMotion && !props.lowPower && <Sparkles count={props.renderQuality === "high" ? 52 : 30} scale={[20, 7, 18]} size={1.3} speed={0.09} color={accent} noise={0.35} />}</>; }
+export default function VaultScene(props: VaultSceneProps) { return <Canvas dpr={props.lowPower ? 1 : props.renderQuality === "high" ? [1, 2] : [1, 1.45]} shadows={!props.lowPower} gl={{ antialias: !props.lowPower, powerPreference: "high-performance" }} camera={{ position: roomCamera["central-chamber"], fov: 45 }}><World props={props} /></Canvas>; }

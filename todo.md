@@ -61,3 +61,15 @@
 - [x] Save a new checkpoint for the finalized evolution-pass state after the post-edit review.
 - [x] Record the remaining authenticated touch-vector and non-3D fallback limitation in the evolution audit.
 - [x] Defer authenticated mobile touch-vector and non-3D fallback interaction evidence pending future secure sign-in, as approved during this session and documented in the evolution audit.
+- [x] Complete the reconstruction directive review and create an architecture audit of conventional-page patterns to remove.
+- [x] Rebuild the viewport, overlay, focus, and pointer-event system around a single intentional application-world hierarchy.
+- [x] Recompose The Vault's central chamber with architectural foreground, middle distance, background, purposeful materials, and spatial path anchors.
+- [x] Replace THE ARCHIVE card/search/panel layout with an explorable artifact environment and compact in-world inspection context.
+- [x] Turn every major object into a consistent world/object/context/action/state entity with visual state and relationship cues.
+- [x] Remove page-scale headings, permanent navigation chrome, generic chat-widget language, and decorative-only science-fiction props from immersive rooms.
+- [x] Make ARIA an in-world discoverable intelligence with contextual activation rather than a conventional chat surface.
+- [x] Convert THE LAB and THE OBSERVATORY to world-native contexts that preserve creation and relationship interactions without dashboard layouts.
+- [x] Complete authenticated visual QA for the desktop central chamber, Archive, Lab, Observatory, physical exits, route deck, and non-3D fallback; unauthenticated desktop/mobile checks and responsive source review confirm the viewport strategy. An authenticated mobile screenshot is documented as a follow-up limitation in RECONSTRUCTION_AUDIT.md.
+- [x] Verify persisted room state, keyboard navigation, non-3D fallback reversibility, visual hierarchy, and object/room routes in an authenticated session; 20 automated assertions, TypeScript, and the production build cover the remaining programmatic paths. Direct authenticated touch emulation remains documented as a follow-up limitation.
+- [x] Verify persisted room return state in an authenticated session by navigating to a destination, refreshing the application, and confirming restoration of the saved room context; evidence is recorded in RECONSTRUCTION_AUDIT.md.
+- [x] Remove the conventional return gate for authenticated return visits so a refreshed persisted room restores directly into the world context.

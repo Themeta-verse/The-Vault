@@ -1,0 +1,68 @@
+import { FormEvent, useMemo, useState } from "react";
+import { Archive, ArrowUpRight, CircleDot, FlaskConical, Loader2, Search, Send, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type { AriaState, VaultState } from "./types";
+
+type ContextProps = {
+  room: "archive" | "lab" | "observatory" | "central-chamber";
+  state: VaultState;
+  selectedArtifactId: string | null;
+  catalogOpen: boolean;
+  ariaFocused: boolean;
+  messages: Array<{ id: number; role: "user" | "aria"; content: string; createdAt: Date }>;
+  ariaState: AriaState;
+  sending: boolean;
+  saving: boolean;
+  materializing: number | null;
+  understanding: boolean;
+  onCloseArtifact: () => void;
+  onCloseCatalog: () => void;
+  onCloseAria: () => void;
+  onInspectArtifact: (id: string) => void;
+  onSend: (message: string) => void;
+  onSaveNote: (title: string, content: string) => void;
+  onMaterialize: (noteId: number) => void;
+  onUnderstand: (objectId: "object-echo-sigil") => void;
+};
+
+function Close({ label, onClick }: { label: string; onClick: () => void }) {
+  return <button className="world-context__close" aria-label={label} onClick={onClick}><X /></button>;
+}
+
+function ArchiveContext({ state, selectedArtifactId, catalogOpen, onCloseArtifact, onCloseCatalog, onInspectArtifact }: Pick<ContextProps, "state" | "selectedArtifactId" | "catalogOpen" | "onCloseArtifact" | "onCloseCatalog" | "onInspectArtifact">) {
+  const [query, setQuery] = useState("");
+  const discovered = new Set(state.discoveries.map(item => item.objectId));
+  const available = state.artifacts.filter(item => discovered.has(item.objectId));
+  const selected = available.find(item => item.id === selectedArtifactId) ?? null;
+  const matches = useMemo(() => available.filter(item => `${item.title} ${item.category} ${item.description}`.toLowerCase().includes(query.toLowerCase().trim())), [available, query]);
+  const relations = selected ? state.relationships.filter(link => link.sourceObjectId === selected.objectId || link.targetObjectId === selected.objectId) : [];
+
+  if (catalogOpen) return <aside className="world-context world-context--catalog" aria-label="Archive catalogue terminal"><Close label="Close catalogue terminal" onClick={onCloseCatalog} /><span className="world-context__eyebrow"><Search /> CATALOGUE MECHANISM</span><Input autoFocus value={query} onChange={event => setQuery(event.target.value)} placeholder="Locate a recorded object" aria-label="Search archive catalogue" /><div className="catalogue-results">{matches.map(item => <button key={item.id} onClick={() => onInspectArtifact(item.id)}><span style={{ "--artifact-accent": item.accent } as React.CSSProperties}>◇</span><strong>{item.title}</strong><small>{item.category}</small><ArrowUpRight /></button>)}{!matches.length && <p>No recorded object answers that query.</p>}</div></aside>;
+  if (!selected) return null;
+  return <aside className="world-context world-context--artifact" aria-label={`Inspect ${selected.title}`} style={{ "--artifact-accent": selected.accent } as React.CSSProperties}><Close label="Return to Archive" onClick={onCloseArtifact} /><span className="world-context__eyebrow"><Archive /> CONTAINMENT RECORD</span><div className="artifact-context__glyph">◇</div><h2>{selected.title}</h2><p className="artifact-context__subtitle">{selected.subtitle}</p><p>{selected.description}</p><div className="artifact-context__rule" />{relations.length > 0 && <div className="artifact-context__relations"><span>CONNECTED</span>{relations.map(relation => <p key={relation.id}><CircleDot /> {relation.label}</p>)}</div>}<button className="world-context__dismiss" onClick={onCloseArtifact}>Release focus</button></aside>;
+}
+
+function LabContext({ state, messages, ariaState, sending, saving, materializing, understanding, onCloseAria, onSend, onSaveNote, onMaterialize, onUnderstand }: Pick<ContextProps, "state" | "messages" | "ariaState" | "sending" | "saving" | "materializing" | "understanding" | "onCloseAria" | "onSend" | "onSaveNote" | "onMaterialize" | "onUnderstand">) {
+  const [mode, setMode] = useState<"voice" | "record">("voice");
+  const [message, setMessage] = useState("");
+  const [title, setTitle] = useState("");
+  const [note, setNote] = useState("");
+  const submitMessage = (event: FormEvent) => { event.preventDefault(); if (!message.trim() || sending) return; onSend(message.trim()); setMessage(""); };
+  const submitNote = (event: FormEvent) => { event.preventDefault(); if (!title.trim() || !note.trim() || saving) return; onSaveNote(title.trim(), note.trim()); setTitle(""); setNote(""); };
+  const sigilReady = state.objectStates.some(item => item.objectId === "object-echo-sigil" && item.state === "discovered");
+  return <aside className="world-context world-context--aria" aria-label="ARIA context"><Close label="Step away from ARIA" onClick={onCloseAria} /><div className="aria-context__head"><span className={`aria-context__presence aria-context__presence--${ariaState}`} /><div><span className="world-context__eyebrow">CONTAINED INTELLIGENCE</span><h2>ARIA</h2></div></div><div className="context-switch" role="tablist" aria-label="Lab instruments"><button role="tab" aria-selected={mode === "voice"} onClick={() => setMode("voice")}>Speak</button><button role="tab" aria-selected={mode === "record"} onClick={() => setMode("record")}>Record</button></div>{mode === "voice" ? <><div className="aria-transcript" aria-live="polite">{messages.slice(-3).map(item => <p key={item.id} className={`aria-transcript__${item.role}`}><span>{item.role === "aria" ? "ARIA" : "YOU"}</span>{item.content}</p>)}{!messages.length && <p className="aria-transcript__aria"><span>ARIA</span>The Lab is quiet until you give it a question.</p>}</div>{sigilReady && <button className="context-action" onClick={() => onUnderstand("object-echo-sigil")} disabled={understanding}>{understanding ? <Loader2 className="spin" /> : <Sparkles />} Interpret the Echo Sigil</button>}<form className="context-composer" onSubmit={submitMessage}><Input value={message} onChange={event => setMessage(event.target.value)} placeholder="Offer a question" aria-label="Message ARIA" /><Button type="submit" disabled={sending || !message.trim()} aria-label="Send message">{sending ? <Loader2 className="spin" /> : <Send />}</Button></form></> : <><form className="instrument-form" onSubmit={submitNote}><Input value={title} onChange={event => setTitle(event.target.value)} placeholder="Name the experiment" aria-label="Experiment title" /><Textarea value={note} onChange={event => setNote(event.target.value)} placeholder="Leave an observation" aria-label="Experiment note" /><Button type="submit" disabled={saving || !title.trim() || !note.trim()}>{saving ? <Loader2 className="spin" /> : <FlaskConical />} Preserve</Button></form><div className="materialization-list">{state.notes.slice(0, 3).map(noteItem => <button key={noteItem.id} onClick={() => onMaterialize(noteItem.id)} disabled={materializing !== null || state.creations.some(creation => creation.sourceNoteId === noteItem.id)}><span>{state.creations.some(creation => creation.sourceNoteId === noteItem.id) ? "ARCHIVED" : "MATERIALIZE"}</span>{noteItem.title}</button>)}</div></>}</aside>;
+}
+
+function ObservatoryContext({ state }: Pick<ContextProps, "state">) {
+  const latest = state.relationships.slice(-4);
+  return <aside className="world-context world-context--observatory" aria-label="Observatory connection record"><span className="world-context__eyebrow"><CircleDot /> ACTIVE CONSTELLATION</span><p className="observatory-context__count">{state.discoveries.length}<small>signals retained</small></p>{latest.map(relation => <p className="observatory-context__link" key={relation.id}><CircleDot /> {relation.label}</p>)}</aside>;
+}
+
+export function WorldContext(props: ContextProps) {
+  if (props.room === "archive") return <ArchiveContext {...props} />;
+  if (props.room === "lab" && props.ariaFocused) return <LabContext {...props} />;
+  if (props.room === "observatory") return <ObservatoryContext {...props} />;
+  return null;
+}
