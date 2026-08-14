@@ -29,3 +29,35 @@
 - [x] Verify persisted non-3D fallback preference through protected-router coverage and record loading/error-state evidence in the execution audit.
 - [x] Confirm the execution audit explicitly names the deferred 3D and non-3D walkthroughs for THE ARCHIVE, THE LAB, and THE OBSERVATORY.
 - [x] Inspect and document explicit loading, empty, and failure-state handling for entry, Vault state, ARIA, notes, Archive, and Observatory panels.
+- [x] Verify the evolution audit explicitly lists the three weakest first-time and return-visit moments with targeted fixes and session-bound deferral.
+- [x] Add a persisted object-world state machine and relationship model that supports observed, discovered, understood, unlocked, and mastered progression.
+- [x] Make discoveries compound through explicit clues, related artifacts, second-layer interactions, and a meaningful hidden sequence.
+- [x] Add state-driven environmental reactions, spatial wayfinding cues, and return-visit changes to The Vault's central chamber.
+- [x] Deepen ARIA with proactive but restrained contextual insight, relationship awareness, and a memorable recorded-context moment.
+- [x] Transform THE ARCHIVE into a more physical collection and connect saved Lab results to persistent artifacts.
+- [x] Evolve THE OBSERVATORY into an understandable relationship-and-milestone network rather than a simple activity display.
+- [x] Improve mobile-specific spatial controls, camera storytelling, focus feedback, touch affordances, and reduced-motion behavior; authenticated mobile visual review remains deferred.
+- [x] Audit client/server trust boundaries, prompt-injection handling, user isolation, API authorization, and unsafe action paths.
+- [x] Restrict discover and observe mutations to the known Vault object contract and cover invalid-object rejection.
+- [x] Measure and address the highest-impact performance constraints, then remove placeholder, dead, or misleading interactions.
+- [ ] Complete a final non-authenticated visual and interaction review, retain a release checkpoint, and document authentication-bound walkthrough deferral.
+- [x] Defer the authenticated first-time and return-visit walkthrough pending secure sign-in, with the limitation recorded in both audit documents.
+- [x] Add protected test coverage for persisted unlocked/mastered states and relationship retrieval in Vault state.
+- [x] Surface related-artifact clues in THE ARCHIVE and THE OBSERVATORY, then verify the compound discovery flow.
+- [x] Add explicit central-chamber wayfinding and return-visit signals with testable implementation evidence.
+- [x] Add a protected unlocked-state retrieval assertion alongside mastered state and relationship coverage.
+- [x] Add related-artifact clue panels in THE ARCHIVE and connect them to THE OBSERVATORY relationship ledger.
+- [x] Add and document a distinct return-visit chamber signal that is visible without completing a new discovery.
+- [x] Add targeted protected-flow tests for clue visibility, Sigil interpretation, Needle unlock, Needle discovery, and Needle mastery.
+- [x] Add an explicit wayfinding beacon that responds to the next valid progression target, then document its return-visit behavior.
+- [x] Extract and test the pure progression-to-beacon mapping across dormant, resonant, mastered, and return-visit states.
+- [x] Complete code-level and unauthenticated mobile validation for camera guidance, focus feedback, touch affordances, reduced motion, and the fallback path; secure-session chamber walkthrough is deferred.
+- [x] Finish and save a written trust-boundary audit covering prompt injection, isolation, authorization, unsafe actions, and residual risks.
+- [x] Finish and save a written trust-boundary audit covering prompt injection, isolation, authorization, unsafe actions, and residual risks.
+- [x] Address or explicitly justify the deferred 3D chunk size, then audit the UI for placeholder, dead, or misleading interactions.
+- [x] Run a successful source audit for placeholder, dead, and misleading UI interactions; resolve any findings and document the evidence.
+- [x] Run a successful source audit for placeholder, dead, and misleading UI interactions; resolve any findings and document the evidence.
+- [x] Run and document a final post-edit non-authenticated review of the entry screen and resolved loading transition; touch-vector and functional fallback controls are code-validated.
+- [ ] Save a new checkpoint for the finalized evolution-pass state after the post-edit review.
+- [x] Record the remaining authenticated touch-vector and non-3D fallback limitation in the evolution audit.
+- [ ] Capture authenticated mobile touch-vector and non-3D fallback interaction evidence once secure sign-in is available.

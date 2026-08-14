@@ -6,8 +6,11 @@ import {
   discoveries,
   experimentNotes,
   InsertUser,
+  objectRelationships,
   rooms,
   userActions,
+  userCreations,
+  userObjectStates,
   userRoomStates,
   users,
   vaultHistory,
@@ -32,13 +35,24 @@ const OBJECT_BLUEPRINT = [
   { id: "door-observatory", roomId: "central-chamber", name: "Observatory Threshold", objectType: "door" as const, description: "A sealed circle that listens for a remembered signal.", interactionHint: "Requires the Memory Prism", accessibleLabel: "Inspect the locked door to THE OBSERVATORY", unlocksRoomId: "observatory" },
   { id: "object-memory-prism", roomId: "central-chamber", name: "Memory Prism", objectType: "artifact" as const, description: "A suspended instrument that records not what happened, but what was noticed.", interactionHint: "Examine the prism", accessibleLabel: "Examine the Memory Prism and unlock the Observatory", unlocksRoomId: "observatory" },
   { id: "object-echo-sigil", roomId: "central-chamber", name: "Echo Sigil", objectType: "artifact" as const, description: "A mark that appears only after the chamber has remembered you. It contains an unfinished coordinate.", interactionHint: "Trace the hidden sigil", accessibleLabel: "Trace the hidden Echo Sigil", unlocksRoomId: null },
+  { id: "object-resonance-needle", roomId: "central-chamber", name: "Resonance Needle", objectType: "artifact" as const, description: "A fine instrument revealed when a remembered signal is answered with an act of creation.", interactionHint: "Align the needle", accessibleLabel: "Inspect the Resonance Needle after following the chamber's linked clues", unlocksRoomId: null },
   { id: "aria-entity", roomId: "central-chamber", name: "ARIA", objectType: "entity" as const, description: "An intelligence that has learned the vault through its visitors.", interactionHint: "Speak with ARIA", accessibleLabel: "Travel to THE LAB to speak with ARIA", unlocksRoomId: null },
 ] as const;
 
 const ARTIFACT_BLUEPRINT = [
   { id: "artifact-memory-prism", objectId: "object-memory-prism", title: "Memory Prism", subtitle: "First instrument of the Observatory", description: "The prism translates attention into a map. It was made for people who notice what rooms attempt to hide.", category: "Mnemonic instrument", accent: "#cdb992" },
   { id: "artifact-echo-sigil", objectId: "object-echo-sigil", title: "Echo Sigil", subtitle: "A coordinate beneath the chamber", description: "The sigil was not hidden. It waited for the chamber to have something worth reflecting back to you.", category: "Latent inscription", accent: "#8eb19d" },
+  { id: "artifact-resonance-needle", objectId: "object-resonance-needle", title: "Resonance Needle", subtitle: "A reward for joining memory to creation", description: "The needle points not to a place, but to the relationship between what you noticed and what you chose to make of it.", category: "Relational instrument", accent: "#b889d1" },
 ] as const;
+
+const RELATIONSHIP_BLUEPRINT = [
+  { id: "rel-prism-reveals-echo", sourceObjectId: "object-memory-prism", targetObjectId: "object-echo-sigil", relationshipType: "reveals" as const, label: "The Prism leaves an echo in the west buttress.", requiredSourceState: "discovered" as const },
+  { id: "rel-echo-resonates-aria", sourceObjectId: "object-echo-sigil", targetObjectId: "aria-entity", relationshipType: "resonates_with" as const, label: "ARIA can interpret a signal the Sigil has made visible.", requiredSourceState: "discovered" as const },
+  { id: "rel-echo-reveals-needle", sourceObjectId: "object-echo-sigil", targetObjectId: "object-resonance-needle", relationshipType: "reveals" as const, label: "A completed circuit through Archive and Lab exposes the Needle.", requiredSourceState: "understood" as const },
+] as const;
+
+const OBJECT_STATE_RANK = { unknown: 0, observed: 1, interacted: 2, discovered: 3, understood: 4, unlocked: 5, mastered: 6 } as const;
+type ObjectState = keyof typeof OBJECT_STATE_RANK;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
@@ -92,10 +106,12 @@ export async function ensureVaultBlueprint(userId: number) {
     OBJECT_BLUEPRINT.map(object => db.insert(vaultObjects).values(object).onDuplicateKeyUpdate({ set: { name: object.name, description: object.description, interactionHint: object.interactionHint, accessibleLabel: object.accessibleLabel, unlocksRoomId: object.unlocksRoomId } })),
   );
   await Promise.all(ARTIFACT_BLUEPRINT.map(artifact => db.insert(artifacts).values(artifact).onDuplicateKeyUpdate({ set: { title: artifact.title, subtitle: artifact.subtitle, description: artifact.description, category: artifact.category, accent: artifact.accent } })));
+  await Promise.all(RELATIONSHIP_BLUEPRINT.map(relationship => db.insert(objectRelationships).values(relationship).onDuplicateKeyUpdate({ set: { label: relationship.label, requiredSourceState: relationship.requiredSourceState } })));
 
   await Promise.all(
     ROOM_BLUEPRINT.map(room => db.insert(userRoomStates).values({ userId, roomId: room.id, isUnlocked: room.id !== "observatory" }).onDuplicateKeyUpdate({ set: { userId } })),
   );
+  await Promise.all(OBJECT_BLUEPRINT.map(object => db.insert(userObjectStates).values({ userId, objectId: object.id }).onDuplicateKeyUpdate({ set: { userId } })));
   await db.insert(vaultSettings).values({ userId }).onDuplicateKeyUpdate({ set: { userId } });
   await Promise.all(
     (["save_note", "aria_context", "aria_navigation"] as const).map(permission => db.insert(vaultPermissions).values({ userId, permission }).onDuplicateKeyUpdate({ set: { allowed: true } })),
@@ -106,17 +122,92 @@ export async function getVaultState(userId: number) {
   await ensureVaultBlueprint(userId);
   const db = await getDb();
   if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
-  const [roomList, objectList, artifactList, roomStates, discoveryList, historyList, noteList, settings] = await Promise.all([
+  const [roomList, objectList, artifactList, roomStates, discoveryList, objectStates, relationshipList, historyList, noteList, creationList, settings] = await Promise.all([
     db.select().from(rooms).orderBy(rooms.sortOrder),
     db.select().from(vaultObjects),
     db.select().from(artifacts),
     db.select().from(userRoomStates).where(eq(userRoomStates.userId, userId)),
     db.select().from(discoveries).where(eq(discoveries.userId, userId)),
+    db.select().from(userObjectStates).where(eq(userObjectStates.userId, userId)),
+    db.select().from(objectRelationships),
     db.select().from(vaultHistory).where(eq(vaultHistory.userId, userId)).orderBy(desc(vaultHistory.createdAt)).limit(100),
     db.select().from(experimentNotes).where(eq(experimentNotes.userId, userId)).orderBy(desc(experimentNotes.updatedAt)),
+    db.select().from(userCreations).where(eq(userCreations.userId, userId)).orderBy(desc(userCreations.updatedAt)),
     db.select().from(vaultSettings).where(eq(vaultSettings.userId, userId)).limit(1),
   ]);
-  return { rooms: roomList, objects: objectList, artifacts: artifactList, roomStates, discoveries: discoveryList, history: historyList, notes: noteList, settings: settings[0] };
+  const objectStateById = new Map(objectStates.map(entry => [entry.objectId, entry.state as ObjectState]));
+  const relationships = relationshipList.filter(relationship => OBJECT_STATE_RANK[objectStateById.get(relationship.sourceObjectId) ?? "unknown"] >= OBJECT_STATE_RANK[relationship.requiredSourceState as ObjectState]);
+  return { rooms: roomList, objects: objectList, artifacts: artifactList, roomStates, discoveries: discoveryList, objectStates, relationships, history: historyList, notes: noteList, creations: creationList, settings: settings[0] };
+}
+
+async function getObjectState(userId: number, objectId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
+  const [record] = await db.select().from(userObjectStates).where(and(eq(userObjectStates.userId, userId), eq(userObjectStates.objectId, objectId))).limit(1);
+  return record;
+}
+
+async function advanceObjectState(userId: number, objectId: string, nextState: ObjectState) {
+  await ensureVaultBlueprint(userId);
+  const db = await getDb();
+  if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
+  const record = await getObjectState(userId, objectId);
+  const currentState = (record?.state ?? "unknown") as ObjectState;
+  if (OBJECT_STATE_RANK[nextState] <= OBJECT_STATE_RANK[currentState]) return currentState;
+  const now = new Date();
+  const timestamps: Partial<Record<"observedAt" | "interactedAt" | "discoveredAt" | "understoodAt" | "masteredAt", Date>> = {};
+  if (nextState === "observed") timestamps.observedAt = now;
+  if (nextState === "interacted") timestamps.interactedAt = now;
+  if (nextState === "discovered") timestamps.discoveredAt = now;
+  if (nextState === "understood") timestamps.understoodAt = now;
+  if (nextState === "mastered") timestamps.masteredAt = now;
+  await db.update(userObjectStates).set({ state: nextState, ...timestamps }).where(and(eq(userObjectStates.userId, userId), eq(userObjectStates.objectId, objectId)));
+  return nextState;
+}
+
+async function assertDiscoveryPrerequisite(userId: number, objectId: string) {
+  if (objectId === "object-echo-sigil") {
+    const prism = await getObjectState(userId, "object-memory-prism");
+    if (OBJECT_STATE_RANK[(prism?.state ?? "unknown") as ObjectState] < OBJECT_STATE_RANK.discovered) throw new Error("The sigil has not yet received a signal. Begin with the Memory Prism.");
+  }
+  if (objectId === "object-resonance-needle") {
+    const echo = await getObjectState(userId, "object-echo-sigil");
+    const db = await getDb();
+    if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
+    const visits = await db.select().from(userRoomStates).where(eq(userRoomStates.userId, userId));
+    const completedCircuit = ["archive", "lab"].every(roomId => visits.find(entry => entry.roomId === roomId)?.firstVisitedAt);
+    if (OBJECT_STATE_RANK[(echo?.state ?? "unknown") as ObjectState] < OBJECT_STATE_RANK.understood || !completedCircuit) throw new Error("The Needle requires a completed circuit: understand the Sigil, then return through both THE ARCHIVE and THE LAB.");
+  }
+}
+
+export async function observeVaultObject(userId: number, objectId: string) {
+  await ensureVaultBlueprint(userId);
+  const db = await getDb();
+  if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
+  const [object] = await db.select().from(vaultObjects).where(eq(vaultObjects.id, objectId)).limit(1);
+  if (!object) throw new Error("That object is not part of this Vault.");
+  const state = await advanceObjectState(userId, objectId, "observed");
+  return { object, state };
+}
+
+export async function understandVaultObject(userId: number, objectId: string) {
+  await ensureVaultBlueprint(userId);
+  const db = await getDb();
+  if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
+  const current = await getObjectState(userId, objectId);
+  if (OBJECT_STATE_RANK[(current?.state ?? "unknown") as ObjectState] < OBJECT_STATE_RANK.discovered) throw new Error("Understanding follows discovery. Stay with the object a little longer.");
+  if (objectId === "object-echo-sigil") {
+    const ariaMessages = await getAriaMessages(userId);
+    if (!ariaMessages.some(message => message.role === "aria")) throw new Error("ARIA has not yet helped you interpret this signal. Bring the Sigil to THE LAB.");
+  }
+  const state = await advanceObjectState(userId, objectId, "understood");
+  let unlockedObjectId: string | null = null;
+  if (objectId === "object-echo-sigil") {
+    await advanceObjectState(userId, "object-resonance-needle", "unlocked");
+    unlockedObjectId = "object-resonance-needle";
+  }
+  await db.insert(vaultHistory).values({ userId, eventType: "discovery", title: `Understood: ${objectId === "object-echo-sigil" ? "Echo Sigil" : "Memory Prism"}`, detail: "A relationship in the Vault has become legible.", targetId: objectId });
+  return { state, unlockedObjectId };
 }
 
 export async function markRoomVisited(userId: number, roomId: string) {
@@ -129,6 +220,10 @@ export async function markRoomVisited(userId: number, roomId: string) {
   await db.update(userRoomStates).set({ firstVisitedAt: state[0].firstVisitedAt ?? now, lastVisitedAt: now }).where(eq(userRoomStates.id, state[0].id));
   await db.update(vaultSettings).set({ lastRoomId: roomId }).where(eq(vaultSettings.userId, userId));
   await db.insert(vaultHistory).values({ userId, eventType: "visit", title: `Entered ${roomId === "central-chamber" ? "THE VAULT" : roomId === "archive" ? "THE ARCHIVE" : roomId === "lab" ? "THE LAB" : "THE OBSERVATORY"}`, detail: "The room acknowledged your return.", targetId: roomId });
+  if (roomId === "observatory") {
+    const prism = await getObjectState(userId, "object-memory-prism");
+    if (OBJECT_STATE_RANK[(prism?.state ?? "unknown") as ObjectState] >= OBJECT_STATE_RANK.discovered) await advanceObjectState(userId, "object-memory-prism", "understood");
+  }
 }
 
 export async function discoverVaultObject(userId: number, objectId: string) {
@@ -137,10 +232,13 @@ export async function discoverVaultObject(userId: number, objectId: string) {
   if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
   const [object] = await db.select().from(vaultObjects).where(eq(vaultObjects.id, objectId)).limit(1);
   if (!object) throw new Error("That object is not part of this Vault.");
+  await assertDiscoveryPrerequisite(userId, objectId);
   const previous = await db.select().from(discoveries).where(and(eq(discoveries.userId, userId), eq(discoveries.objectId, objectId))).limit(1);
   if (previous[0]) return { isNew: false, object, artifact: null, unlockedRoomId: null };
   const [artifact] = await db.select().from(artifacts).where(eq(artifacts.objectId, objectId)).limit(1);
+  await advanceObjectState(userId, objectId, "interacted");
   await db.insert(discoveries).values({ userId, objectId, artifactId: artifact?.id });
+  await advanceObjectState(userId, objectId, "discovered");
   await db.insert(vaultHistory).values({ userId, eventType: "discovery", title: `Discovered: ${object.name}`, detail: object.description, targetId: object.id });
   if (object.unlocksRoomId) {
     await db.update(userRoomStates).set({ isUnlocked: true }).where(and(eq(userRoomStates.userId, userId), eq(userRoomStates.roomId, object.unlocksRoomId)));
@@ -156,6 +254,20 @@ export async function saveExperimentNote(userId: number, title: string, content:
   const result = await db.insert(experimentNotes).values({ userId, title, content });
   await db.insert(vaultHistory).values({ userId, eventType: "note", title: `Experiment recorded: ${title}`, detail: "A new fragment was placed in THE LAB.", targetId: String(result[0].insertId) });
   return result[0].insertId;
+}
+
+export async function materializeExperiment(userId: number, noteId: number) {
+  await ensureVaultBlueprint(userId);
+  const db = await getDb();
+  if (!db) throw new Error("The Lab could not materialize this result. Please try again.");
+  const [note] = await db.select().from(experimentNotes).where(and(eq(experimentNotes.id, noteId), eq(experimentNotes.userId, userId))).limit(1);
+  if (!note) throw new Error("That experiment does not belong to this Vault.");
+  await db.insert(userCreations).values({ userId, sourceNoteId: note.id, title: note.title, description: note.content, status: "artifact" }).onDuplicateKeyUpdate({ set: { title: note.title, description: note.content, status: "artifact" } });
+  const [creation] = await db.select().from(userCreations).where(and(eq(userCreations.userId, userId), eq(userCreations.sourceNoteId, note.id))).limit(1);
+  const needle = await getObjectState(userId, "object-resonance-needle");
+  if (OBJECT_STATE_RANK[(needle?.state ?? "unknown") as ObjectState] >= OBJECT_STATE_RANK.discovered) await advanceObjectState(userId, "object-resonance-needle", "mastered");
+  await db.insert(vaultHistory).values({ userId, eventType: "note", title: `Artifact materialized: ${note.title}`, detail: "A Lab result entered the Archive as a persistent creation.", targetId: `creation-${creation?.id}` });
+  return creation;
 }
 
 export async function setVaultSettings(userId: number, changes: Partial<{ soundEnabled: boolean; reducedMotion: boolean; highContrast: boolean; preferFallback: boolean; renderQuality: "auto" | "high" | "low"; introSeen: boolean }>) {

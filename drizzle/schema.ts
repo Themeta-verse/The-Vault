@@ -78,6 +78,37 @@ export const discoveries = mysqlTable(
   table => [uniqueIndex("user_object_discovery_unique").on(table.userId, table.objectId)],
 );
 
+export const userObjectStates = mysqlTable(
+  "userObjectStates",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(),
+    objectId: varchar("objectId", { length: 64 }).notNull(),
+    state: mysqlEnum("state", ["unknown", "observed", "interacted", "discovered", "understood", "unlocked", "mastered"]).default("unknown").notNull(),
+    observedAt: timestamp("observedAt"),
+    interactedAt: timestamp("interactedAt"),
+    discoveredAt: timestamp("discoveredAt"),
+    understoodAt: timestamp("understoodAt"),
+    masteredAt: timestamp("masteredAt"),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("user_object_state_unique").on(table.userId, table.objectId)],
+);
+
+export const objectRelationships = mysqlTable(
+  "objectRelationships",
+  {
+    id: varchar("id", { length: 80 }).primaryKey(),
+    sourceObjectId: varchar("sourceObjectId", { length: 64 }).notNull(),
+    targetObjectId: varchar("targetObjectId", { length: 64 }).notNull(),
+    relationshipType: mysqlEnum("relationshipType", ["reveals", "resonates_with", "unlocks", "interprets", "created_from"]).notNull(),
+    label: varchar("label", { length: 160 }).notNull(),
+    requiredSourceState: mysqlEnum("requiredSourceState", ["unknown", "observed", "interacted", "discovered", "understood", "unlocked", "mastered"]).default("discovered").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [uniqueIndex("object_relationship_unique").on(table.sourceObjectId, table.targetObjectId, table.relationshipType)],
+);
+
 export const vaultHistory = mysqlTable("vaultHistory", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
@@ -96,6 +127,17 @@ export const experimentNotes = mysqlTable("experimentNotes", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
+
+export const userCreations = mysqlTable("userCreations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  sourceNoteId: int("sourceNoteId").notNull(),
+  title: varchar("title", { length: 120 }).notNull(),
+  description: text("description").notNull(),
+  status: mysqlEnum("status", ["result", "artifact"]).default("result").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("user_creation_source_note_unique").on(table.userId, table.sourceNoteId)]);
 
 export const aiConversations = mysqlTable("aiConversations", {
   id: int("id").autoincrement().primaryKey(),

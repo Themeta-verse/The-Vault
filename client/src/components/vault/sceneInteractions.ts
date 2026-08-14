@@ -6,5 +6,6 @@ export const centralChamberObjects: InteractiveObjectDefinition[] = [
   { id: "door-observatory", type: "portal", roomId: "central-chamber", position: [0, 4, -8], destination: "observatory", metadata: { title: "THE OBSERVATORY", caption: "THRESHOLD", accent: "#67a38b" } },
   { id: "object-memory-prism", type: "artifact", roomId: "central-chamber", position: [0, 1.35, 0], metadata: { title: "MEMORY PRISM", caption: "UNRESOLVED", accent: "#d6c08a" } },
   { id: "object-echo-sigil", type: "artifact", roomId: "central-chamber", position: [-3.6, 3.45, 1.3], metadata: { title: "ECHO SIGIL", caption: "UNEXPECTED SIGNAL", accent: "#a9ceb6" } },
+  { id: "object-resonance-needle", type: "artifact", roomId: "central-chamber", position: [0, 4.1, -3.8], metadata: { title: "RESONANCE NEEDLE", caption: "COMPLETED CIRCUIT", accent: "#b889d1" } },
   { id: "aria-entity", type: "entity", roomId: "central-chamber", position: [3.6, 0, 1.4], destination: "lab", metadata: { title: "ARIA", caption: "INTELLIGENCE", accent: "#bc8bd0" } },
 ];
