@@ -1,0 +1,1 @@
+ALTER TABLE `vaultSettings` ADD `renderQuality` enum('auto','high','low') DEFAULT 'auto' NOT NULL;

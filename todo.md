@@ -1,0 +1,28 @@
+# Project TODO
+
+- [x] Define the persistent Vault schema for rooms, objects, artifacts, discoveries, history, AI conversations, actions, settings, and permissions.
+- [x] Apply database migrations and add owner-scoped server query helpers for every Vault entity.
+- [x] Add protected tRPC procedures for initial state, discoveries, notes, history, settings, and ARIA conversations.
+- [x] Install and configure the React Three Fiber rendering stack with a WebGL capability fallback.
+- [x] Add scoped DB helpers for permissions and remaining Vault entity access patterns.
+- [x] Build the cinematic entry sequence and THE VAULT central chamber scene.
+- [x] Create reusable 3D door, artifact, ARIA entity, interaction, transition, and adaptive-rendering components.
+- [x] Implement discoverable routes to THE ARCHIVE, THE LAB, and THE OBSERVATORY without page reloads.
+- [x] Build THE ARCHIVE as a functional artifact inspection and collection workspace.
+- [x] Build THE LAB as a functional ARIA conversation and persistent experiment-note workspace.
+- [x] Build THE OBSERVATORY as a functional, accessible visualization of Vault History and discovery relationships.
+- [x] Persist user actions, discoveries, notes, AI conversations, settings, and world access changes in real time.
+- [x] Implement ARIA server-side contextual responses with bounded, validated world actions.
+- [x] Add keyboard, screen-reader, reduced-motion, high-contrast, touch, and non-3D navigation alternatives.
+- [x] Add intentional mobile spatial navigation and effect reduction for constrained devices.
+- [x] Add immersive discovery confirmations, the progressive unlock system, signature interaction, and easter eggs.
+- [x] Write unit tests covering access control, persistence helpers, discovery progression, and ARIA action validation.
+- [ ] Verify authenticated desktop and mobile destination flows, the non-3D fallback, loading/error states, and TypeScript build quality.
+- [ ] Conduct final visual review and save the completed project version.
+- [x] Audit the current repository and document implemented, incomplete, and at-risk parts of the expanded Vault specification.
+- [x] Replace scene-specific interaction wiring with a reusable object definition and interaction framework.
+- [x] Make ARIA's idle, listening, thinking, responding, success, warning, and error states visible in the world and Lab.
+- [x] Add safe structured ARIA actions for navigation and discovery review with visible confirmations; note creation remains explicitly user-confirmed in THE LAB.
+- [x] Add searchable Archive collection controls and meaningful discovery metadata.
+- [ ] Add an explicit quality override alongside automatic rendering adaptation and test the non-3D fallback flow.
+- [ ] Verify authenticated 3D and fallback paths across all three destinations after user sign-in becomes available.

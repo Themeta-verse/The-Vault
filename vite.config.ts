@@ -167,6 +167,15 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/@react-three") || id.includes("node_modules/three")) return "vault-3d";
+          if (id.includes("node_modules/lucide-react")) return "vault-icons";
+          if (id.includes("node_modules/react") || id.includes("node_modules/scheduler")) return "react-runtime";
+        },
+      },
+    },
   },
   server: {
     host: true,

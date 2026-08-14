@@ -1,33 +1,12 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { Loader2, LogIn } from "lucide-react";
+import VaultExperience from "@/components/vault/VaultExperience";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
 export default function Home() {
-  // The useAuth hook provides authentication state.
-  // To implement login/logout, call logout(), or start login from an event
-  // handler: onClick={() => startLogin()} (imported from "@/const"). Never call
-  // startLogin() during render (no href={startLogin()}) — it mints a one-time
-  // nonce cookie and must run only at the moment of navigation.
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
-
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
-      </main>
-    </div>
-  );
+  const { loading, isAuthenticated, error } = useAuth();
+  if (loading) return <div className="vault-loading"><Loader2 className="spin" /><p>LOCATING THE VAULT</p></div>;
+  if (!isAuthenticated) return <main className="entry-gate"><div className="entry-gate__scene"><div className="entry-gate__ring" /><div className="entry-gate__monolith" /></div><section><p className="eyebrow">A LIVING DIGITAL WORLD</p><h1>THE<br />VAULT</h1><p>Enter a persistent environment that remembers what you discover. Your history belongs to your account alone.</p>{error && <p className="entry-gate__error">Authentication could not be confirmed. You can try entering again.</p>}<Button className="enter-button" onClick={() => startLogin()}><LogIn /> Enter your Vault</Button><small>Authentication protects your discoveries, history, notes, and conversations with ARIA.</small></section></main>;
+  return <VaultExperience />;
 }

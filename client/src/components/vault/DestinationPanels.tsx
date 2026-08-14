@@ -1,0 +1,47 @@
+import { FormEvent, useMemo, useState } from "react";
+import { ArrowLeft, ArrowUpRight, BookOpen, CircleDot, Compass, Eye, FlaskConical, Loader2, Search, Send, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type { AriaState, RoomId, VaultState } from "./types";
+
+type SharedProps = { state: VaultState; onReturn: () => void; onRoomChange: (room: RoomId) => void };
+
+export function ArchivePanel({ state, onReturn }: SharedProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const discovered = new Set(state.discoveries.map(discovery => discovery.objectId));
+  const items = state.artifacts.filter(artifact => discovered.has(artifact.objectId));
+  const visibleItems = items.filter(item => `${item.title} ${item.subtitle} ${item.category} ${item.description}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const selected = visibleItems.find(item => item.id === selectedId) ?? visibleItems[0];
+  return <section className="destination-panel" aria-labelledby="archive-heading">
+    <div className="destination-panel__header"><div><span className="eyebrow">COLLECTION 01</span><h1 id="archive-heading">THE ARCHIVE</h1><p>Artifacts become useful only after they are understood.</p></div><Button variant="ghost" className="return-button" onClick={onReturn}><ArrowLeft /> Return to chamber</Button></div>
+    <div className="archive-layout"><div className="artifact-list" aria-label="Discovered artifacts">{items.length ? <><label className="artifact-search"><Search /><span className="sr-only">Search discovered artifacts</span><Input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search your collection" /></label>{visibleItems.length ? visibleItems.map((item, index) => <button className={`artifact-card ${selected?.id === item.id ? "artifact-card--active" : ""}`} key={item.id} onClick={() => setSelectedId(item.id)}><span className="artifact-index">{String(index + 1).padStart(2, "0")}</span><span className="artifact-card__glyph" style={{ "--accent": item.accent } as React.CSSProperties}>◇</span><span><strong>{item.title}</strong><small>{item.category}</small></span><ArrowUpRight /></button>) : <div className="empty-chamber"><Search /><p>No recorded artifact matches “{query}”.</p></div>}</> : <div className="empty-chamber"><BookOpen /><p>The shelves are quiet. Begin with the Memory Prism in The Vault's central chamber.</p></div>}</div>
+      <article className="artifact-inspection">{selected ? <><div className="inspection-aura" style={{ "--accent": selected.accent } as React.CSSProperties} /><span className="eyebrow">{selected.subtitle}</span><h2>{selected.title}</h2><p className="artifact-category">{selected.category}</p><p>{selected.description}</p><div className="inspection-rule" /><dl className="artifact-metadata"><div><dt>Collection status</dt><dd>Recorded</dd></div><div><dt>Discovered</dt><dd>{new Date(state.discoveries.find(item => item.objectId === selected.objectId)?.discoveredAt ?? Date.now()).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</dd></div></dl><p className="artifact-record">Recorded in your Vault History. This artifact remains available every time you return.</p></> : <><span className="eyebrow">NO ACTIVE ARTIFACT</span><h2>Notice something.</h2><p>Objects in The Vault are not rewards for clicking. They are evidence of attention.</p></>}</article></div>
+  </section>;
+}
+
+export function LabPanel({ state, messages, sending, saving, ariaState, onSend, onSaveNote, onReturn, onRoomChange }: SharedProps & { messages: Array<{ id: number; role: "user" | "aria"; content: string; createdAt: Date }>; sending: boolean; saving: boolean; ariaState: AriaState; onSend: (message: string) => void; onSaveNote: (title: string, content: string) => void }) {
+  const [message, setMessage] = useState(""); const [title, setTitle] = useState(""); const [note, setNote] = useState("");
+  const ariaCopy: Record<AriaState, string> = { idle: "PRESENT IN THE LAB", listening: "LISTENING", thinking: "THINKING", responding: "RESPONDING", success: "SIGNAL CONFIRMED", warning: "CAUTION", error: "SIGNAL INTERRUPTED" };
+  const submitMessage = (event: FormEvent) => { event.preventDefault(); if (!message.trim() || sending) return; onSend(message.trim()); setMessage(""); };
+  const submitNote = (event: FormEvent) => { event.preventDefault(); if (!title.trim() || !note.trim() || saving) return; onSaveNote(title.trim(), note.trim()); setTitle(""); setNote(""); };
+  return <section className="destination-panel lab-panel" aria-labelledby="lab-heading"><div className="destination-panel__header"><div><span className="eyebrow">WORKSPACE 02</span><h1 id="lab-heading">THE LAB</h1><p>ARIA holds the question still while you decide what it means.</p></div><Button variant="ghost" className="return-button" onClick={onReturn}><ArrowLeft /> Return to chamber</Button></div>
+    <div className="lab-layout"><div className="aria-console"><div className="aria-console__head"><div className={`aria-presence aria-presence--${ariaState}`}><span className="aria-orb" /><span><strong>ARIA</strong><small>{ariaCopy[ariaState]}</small></span></div><span className="live-signal">LIVE CONTEXT</span></div><div className="aria-state-line" role="status">{ariaCopy[ariaState]} <span>·</span> Room context preserved</div><div className="aria-messages" aria-live="polite">{messages.length ? messages.map(entry => <article className={`aria-message aria-message--${entry.role}`} key={entry.id}><span>{entry.role === "aria" ? "ARIA" : "YOU"}</span><p>{entry.content}</p></article>) : <article className="aria-message aria-message--aria"><span>ARIA</span><p>The Lab is listening. Ask about a discovery, ask where to go, or leave a thought that should persist.</p></article>}</div><form className="aria-input" onSubmit={submitMessage}><Input aria-label="Message ARIA" value={message} maxLength={1200} onChange={event => setMessage(event.target.value)} placeholder="Ask ARIA about this place…" /><Button type="submit" disabled={sending || !message.trim()} aria-label="Send message to ARIA">{sending ? <Loader2 className="spin" /> : <Send />}</Button></form></div>
+      <div className="note-station"><div><span className="eyebrow">EXPERIMENT LOG</span><h2>Leave a fragment.</h2></div><form onSubmit={submitNote}><Input aria-label="Experiment title" value={title} maxLength={120} onChange={event => setTitle(event.target.value)} placeholder="Title" /><Textarea aria-label="Experiment note" value={note} maxLength={8000} onChange={event => setNote(event.target.value)} placeholder="A possibility, question, or observation…" /><Button type="submit" disabled={saving || !title.trim() || !note.trim()}>{saving ? <Loader2 className="spin" /> : <FlaskConical />} Preserve note</Button></form><div className="note-list">{state.notes.slice(0, 3).map(noteItem => <article key={noteItem.id}><span>{new Date(noteItem.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span><strong>{noteItem.title}</strong><p>{noteItem.content}</p></article>)}</div></div></div>
+  </section>;
+}
+
+export function ObservatoryPanel({ state, onReturn, onRoomChange }: SharedProps) {
+  const nodes = useMemo(() => [
+    { label: "THE VAULT", state: "entered", icon: Compass },
+    { label: "MEMORY PRISM", state: state.discoveries.some(item => item.objectId === "object-memory-prism") ? "discovered" : "unresolved", icon: Sparkles },
+    { label: "THE ARCHIVE", state: "visited", icon: BookOpen },
+    { label: "THE LAB", state: "visited", icon: FlaskConical },
+    { label: "THE OBSERVATORY", state: "current", icon: Eye },
+  ], [state.discoveries]);
+  return <section className="destination-panel observatory-panel" aria-labelledby="observatory-heading"><div className="destination-panel__header"><div><span className="eyebrow">RECORD 03</span><h1 id="observatory-heading">THE OBSERVATORY</h1><p>The Vault does not count your time. It remembers what you changed by noticing.</p></div><Button variant="ghost" className="return-button" onClick={onReturn}><ArrowLeft /> Return to chamber</Button></div>
+    <div className="observatory-layout"><div className="constellation" aria-label="Discovery relationship visualization"><div className="constellation__rings" />{nodes.map((node, index) => { const Icon = node.icon; return <div className={`constellation-node constellation-node--${node.state}`} style={{ "--node-angle": `${index * 72 - 90}deg` } as React.CSSProperties} key={node.label}><div><Icon /><span>{node.label}</span></div></div>})}<div className="constellation-core"><CircleDot /><span>{state.discoveries.length} discoveries</span></div></div>
+      <div className="history-stream"><div className="history-stream__head"><span className="eyebrow">VAULT HISTORY</span><span>{state.history.length} recorded shifts</span></div>{state.history.length ? state.history.map(event => <article key={event.id}><time>{new Date(event.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time><div><strong>{event.title}</strong><p>{event.detail}</p></div></article>) : <div className="empty-chamber"><Compass /><p>Your first entry will become the first coordinate in this record.</p></div>}</div></div>
+  </section>;
+}
