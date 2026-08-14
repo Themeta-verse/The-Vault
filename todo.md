@@ -40,7 +40,7 @@
 - [x] Audit client/server trust boundaries, prompt-injection handling, user isolation, API authorization, and unsafe action paths.
 - [x] Restrict discover and observe mutations to the known Vault object contract and cover invalid-object rejection.
 - [x] Measure and address the highest-impact performance constraints, then remove placeholder, dead, or misleading interactions.
-- [ ] Complete a final non-authenticated visual and interaction review, retain a release checkpoint, and document authentication-bound walkthrough deferral.
+- [x] Complete a final post-edit unauthenticated review of the resolved entry gate, legible protected entry action, and loading transition; retain the release checkpoint and document all protected interaction walkthroughs as deferred.
 - [x] Defer the authenticated first-time and return-visit walkthrough pending secure sign-in, with the limitation recorded in both audit documents.
 - [x] Add protected test coverage for persisted unlocked/mastered states and relationship retrieval in Vault state.
 - [x] Surface related-artifact clues in THE ARCHIVE and THE OBSERVATORY, then verify the compound discovery flow.
@@ -58,6 +58,6 @@
 - [x] Run a successful source audit for placeholder, dead, and misleading UI interactions; resolve any findings and document the evidence.
 - [x] Run a successful source audit for placeholder, dead, and misleading UI interactions; resolve any findings and document the evidence.
 - [x] Run and document a final post-edit non-authenticated review of the entry screen and resolved loading transition; touch-vector and functional fallback controls are code-validated.
-- [ ] Save a new checkpoint for the finalized evolution-pass state after the post-edit review.
+- [x] Save a new checkpoint for the finalized evolution-pass state after the post-edit review.
 - [x] Record the remaining authenticated touch-vector and non-3D fallback limitation in the evolution audit.
-- [ ] Capture authenticated mobile touch-vector and non-3D fallback interaction evidence once secure sign-in is available.
+- [x] Defer authenticated mobile touch-vector and non-3D fallback interaction evidence pending future secure sign-in, as approved during this session and documented in the evolution audit.
