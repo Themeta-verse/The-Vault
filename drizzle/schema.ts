@@ -164,6 +164,8 @@ export const vaultSettings = mysqlTable("vaultSettings", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
   soundEnabled: boolean("soundEnabled").default(false).notNull(),
+  ambientVolume: int("ambientVolume").default(38).notNull(),
+  interactionVolume: int("interactionVolume").default(62).notNull(),
   reducedMotion: boolean("reducedMotion").default(false).notNull(),
   highContrast: boolean("highContrast").default(false).notNull(),
   preferFallback: boolean("preferFallback").default(false).notNull(),

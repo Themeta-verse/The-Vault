@@ -88,7 +88,9 @@ Never place a production token, database password, or signing key in source cont
 
 The database models rooms, objects, artefacts, discoveries, user object states, relationships, notes, creations, history, settings, permissions, actions, and ARIA conversations. Progression follows a persisted lifecycle from `observed` to `interacted`, `discovered`, `understood`, `unlocked`, and `mastered`.
 
-The compound discovery path connects the Memory Prism, Echo Sigil, ARIA interpretation, Resonance Needle, and a materialized Lab result. The renderer observes this data and changes paths, context, light, wayfinding, Archive records, Lab creations, and Observatory landmarks without treating client-side visual state as authorization. Returning users re-enter their persisted room directly rather than passing through an intermediate page-style gate.
+The original compound discovery path now expands without replacing its existing Prism-to-Needle sequence. The **Memory Prism** reveals the **Palimpsest Lens** in THE ARCHIVE; the Lens deepens the Echo Sigil’s interpretive route in THE LAB. In parallel, the **Resonance Needle** reveals the **Quiet Cistern**, whose interpretation exposes the **Astral Index** in THE OBSERVATORY. These authored objects carry their own artefacts and persisted relationship records, and are rendered once in their native rooms with the same owner-scoped progression contract as the original chain.
+
+Spatial audio is optional and begins only after an explicit interaction. The access deck stores a per-user audio preference plus independent integer percentage controls for ambient tone and interaction cues. The browser-only Web Audio layer is gesture-gated, uses room-specific ambient tones and stereo interaction cues, honours the persisted mute state, and quietly does nothing when audio is unavailable. It uses no downloaded audio assets and does not make sound a requirement for discovery, navigation, or the semantic fallback.
 
 ## Accessibility and responsive behavior
 
@@ -100,7 +102,7 @@ All stateful Vault operations use protected tRPC procedures. The server scopes r
 
 ## Testing and validation
 
-The suite includes server authentication and Vault-router coverage, a non-destructive clean-state journey, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, and bounded client failure-copy contracts. The mastery pass verified **28 assertions** across five test files, TypeScript, production build output, authenticated desktop room flows, persisted return state, non-3D restoration, and the access-deck focus boundary. Run the following before a release:
+The suite includes server authentication and Vault-router coverage, a non-destructive clean-state journey, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, bounded client failure-copy contracts, and protected contracts for authored branch objects plus audio preferences. The expansion release verifies **31 assertions** across five test files, TypeScript, and production build output. Browser audio remains intentionally excluded from headless sound-output assertions because its explicit user-gesture requirement is part of the feature contract. Run the following before a release:
 
 ```bash
 pnpm test
@@ -116,7 +118,7 @@ THE VAULT is configured for managed Manus hosting. Saving a verified checkpoint 
 
 ## Limitations and roadmap
 
-The current renderer is intentionally bounded: it uses procedural geometry and controlled effects instead of heavy downloaded assets, preserving a predictable performance envelope. The principal remaining performance trade-off is the lazy-loaded 3D code chunk, which is intentionally accepted to retain the spatial world without splitting interaction contracts across multiple views. Future work can add richer navigation controls, more artefact geometry, sound design, room-specific camera tours, a broader relationship graph, and authored world events without replacing the existing persistence contract.
+The current renderer is intentionally bounded: it uses procedural geometry and controlled effects instead of heavy downloaded assets, preserving a predictable performance envelope. The principal remaining performance trade-off is the lazy-loaded 3D code chunk, which is intentionally accepted to retain the spatial world without splitting interaction contracts across multiple views. The shipped spatial audio is deliberately synthetic, optional, and browser-gated; richer authored sound design remains a future enhancement. Future work can add more artefact geometry, room-specific camera tours, a broader relationship graph, and authored world events without replacing the existing persistence contract.
 
 ## Repository hygiene
 

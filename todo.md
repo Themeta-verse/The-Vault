@@ -87,3 +87,10 @@
 - [x] Restore the primary renderer reliably when authenticated users disable non-3D mode from the fallback access deck, preserving their active room and preferences.
 - [x] Restore the primary renderer reliably when authenticated users disable non-3D mode from the fallback access deck, preserving their active room and preferences; authenticated verification confirmed the prior apparent failure was a browser-targeting artifact.
 - [x] Complete the user-directed full release pass: re-run all automated validation, verify the published route after checkpointing, and compare the GitHub commit with the final project checkpoint.
+- [x] Audit existing artifact, object, relationship, discovery, and settings contracts before expanding authored content and persisted audio preferences.
+- [x] Add authored artifact records and at least two meaningful relationship branches that deepen Archive, Lab, and Observatory discovery without breaking the existing Prism-to-Needle chain.
+- [x] Surface authored relationship branches in room-native Archive and Observatory context while preserving owner-scoped progression and accessible navigation.
+- [x] Add an optional spatial-audio system with independent ambient and interaction volume controls, mute behavior, and persisted per-user preferences.
+- [x] Ensure audio is opt-in, begins only after an explicit user gesture, respects reduced motion/non-3D preferences where appropriate, and degrades silently when browser audio is unavailable.
+- [x] Add focused owner-scoped authored-object and audio-preference tests, then validate the release with 31 Vitest assertions, TypeScript, and a production build; browser-audio output remains intentionally gesture-dependent rather than fabricated in automation.
+- [x] Update release documentation and audits for the expanded data network and audio controls, save a checkpoint, and synchronize GitHub main.

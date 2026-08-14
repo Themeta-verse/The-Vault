@@ -36,6 +36,9 @@ const OBJECT_BLUEPRINT = [
   { id: "object-memory-prism", roomId: "central-chamber", name: "Memory Prism", objectType: "artifact" as const, description: "A suspended instrument that records not what happened, but what was noticed.", interactionHint: "Examine the prism", accessibleLabel: "Examine the Memory Prism and unlock the Observatory", unlocksRoomId: "observatory" },
   { id: "object-echo-sigil", roomId: "central-chamber", name: "Echo Sigil", objectType: "artifact" as const, description: "A mark that appears only after the chamber has remembered you. It contains an unfinished coordinate.", interactionHint: "Trace the hidden sigil", accessibleLabel: "Trace the hidden Echo Sigil", unlocksRoomId: null },
   { id: "object-resonance-needle", roomId: "central-chamber", name: "Resonance Needle", objectType: "artifact" as const, description: "A fine instrument revealed when a remembered signal is answered with an act of creation.", interactionHint: "Align the needle", accessibleLabel: "Inspect the Resonance Needle after following the chamber's linked clues", unlocksRoomId: null },
+  { id: "object-palimpsest-lens", roomId: "archive", name: "Palimpsest Lens", objectType: "artifact" as const, description: "A faceted lens that allows one retained record to be read inside another. Its surfaces keep rearranging the Archive's margins.", interactionHint: "Settle the lens into the Archive light", accessibleLabel: "Examine the Palimpsest Lens in THE ARCHIVE", unlocksRoomId: null },
+  { id: "object-quiet-cistern", roomId: "lab", name: "Quiet Cistern", objectType: "artifact" as const, description: "A sealed vessel that absorbs unfinished questions and returns their outline as a low, clear tone.", interactionHint: "Listen at the cistern", accessibleLabel: "Examine the Quiet Cistern in THE LAB", unlocksRoomId: null },
+  { id: "object-astral-index", roomId: "observatory", name: "Astral Index", objectType: "terminal" as const, description: "A suspended index of routes that only acquires entries when a discovery is carried between rooms.", interactionHint: "Read the living index", accessibleLabel: "Examine the Astral Index in THE OBSERVATORY", unlocksRoomId: null },
   { id: "aria-entity", roomId: "central-chamber", name: "ARIA", objectType: "entity" as const, description: "An intelligence that has learned the vault through its visitors.", interactionHint: "Speak with ARIA", accessibleLabel: "Travel to THE LAB to speak with ARIA", unlocksRoomId: null },
 ] as const;
 
@@ -43,12 +46,19 @@ const ARTIFACT_BLUEPRINT = [
   { id: "artifact-memory-prism", objectId: "object-memory-prism", title: "Memory Prism", subtitle: "First instrument of the Observatory", description: "The prism translates attention into a map. It was made for people who notice what rooms attempt to hide.", category: "Mnemonic instrument", accent: "#cdb992" },
   { id: "artifact-echo-sigil", objectId: "object-echo-sigil", title: "Echo Sigil", subtitle: "A coordinate beneath the chamber", description: "The sigil was not hidden. It waited for the chamber to have something worth reflecting back to you.", category: "Latent inscription", accent: "#8eb19d" },
   { id: "artifact-resonance-needle", objectId: "object-resonance-needle", title: "Resonance Needle", subtitle: "A reward for joining memory to creation", description: "The needle points not to a place, but to the relationship between what you noticed and what you chose to make of it.", category: "Relational instrument", accent: "#b889d1" },
+  { id: "artifact-palimpsest-lens", objectId: "object-palimpsest-lens", title: "Palimpsest Lens", subtitle: "Archive instrument for layered records", description: "The lens draws a second line through any memory you have already kept. In its glass, the Prism's signal becomes a readable margin.", category: "Archive optic", accent: "#d2b879" },
+  { id: "artifact-quiet-cistern", objectId: "object-quiet-cistern", title: "Quiet Cistern", subtitle: "Lab vessel for unfinished signals", description: "The cistern does not answer a question. It removes the noise around it until the next relationship can be heard.", category: "Resonant vessel", accent: "#8db9b2" },
+  { id: "artifact-astral-index", objectId: "object-astral-index", title: "Astral Index", subtitle: "Observatory register of carried discoveries", description: "Each entry is a route made deliberate: a record moved from attention to understanding, then carried somewhere else.", category: "Living register", accent: "#9fb9e3" },
 ] as const;
 
 const RELATIONSHIP_BLUEPRINT = [
   { id: "rel-prism-reveals-echo", sourceObjectId: "object-memory-prism", targetObjectId: "object-echo-sigil", relationshipType: "reveals" as const, label: "The Prism leaves an echo in the west buttress.", requiredSourceState: "discovered" as const },
   { id: "rel-echo-resonates-aria", sourceObjectId: "object-echo-sigil", targetObjectId: "aria-entity", relationshipType: "resonates_with" as const, label: "ARIA can interpret a signal the Sigil has made visible.", requiredSourceState: "discovered" as const },
   { id: "rel-echo-reveals-needle", sourceObjectId: "object-echo-sigil", targetObjectId: "object-resonance-needle", relationshipType: "reveals" as const, label: "A completed circuit through Archive and Lab exposes the Needle.", requiredSourceState: "understood" as const },
+  { id: "rel-prism-reveals-lens", sourceObjectId: "object-memory-prism", targetObjectId: "object-palimpsest-lens", relationshipType: "reveals" as const, label: "The Prism leaves a second reading in the Archive: the Palimpsest Lens.", requiredSourceState: "discovered" as const },
+  { id: "rel-lens-interprets-sigil", sourceObjectId: "object-palimpsest-lens", targetObjectId: "object-echo-sigil", relationshipType: "interprets" as const, label: "The Lens gives the Sigil's coordinate a readable margin.", requiredSourceState: "understood" as const },
+  { id: "rel-needle-resonates-cistern", sourceObjectId: "object-resonance-needle", targetObjectId: "object-quiet-cistern", relationshipType: "resonates_with" as const, label: "The Needle tunes the Quiet Cistern to a question that can remain unfinished.", requiredSourceState: "discovered" as const },
+  { id: "rel-cistern-reveals-index", sourceObjectId: "object-quiet-cistern", targetObjectId: "object-astral-index", relationshipType: "reveals" as const, label: "A quieted signal appears in the Observatory as a new Astral Index entry.", requiredSourceState: "understood" as const },
 ] as const;
 
 const OBJECT_STATE_RANK = { unknown: 0, observed: 1, interacted: 2, discovered: 3, understood: 4, unlocked: 5, mastered: 6 } as const;
@@ -178,6 +188,18 @@ async function assertDiscoveryPrerequisite(userId: number, objectId: string) {
     const completedCircuit = ["archive", "lab"].every(roomId => visits.find(entry => entry.roomId === roomId)?.firstVisitedAt);
     if (OBJECT_STATE_RANK[(echo?.state ?? "unknown") as ObjectState] < OBJECT_STATE_RANK.understood || !completedCircuit) throw new Error("The Needle requires a completed circuit: understand the Sigil, then return through both THE ARCHIVE and THE LAB.");
   }
+  if (objectId === "object-palimpsest-lens") {
+    const prism = await getObjectState(userId, "object-memory-prism");
+    if (OBJECT_STATE_RANK[(prism?.state ?? "unknown") as ObjectState] < OBJECT_STATE_RANK.discovered) throw new Error("The Lens cannot hold a reading until the Memory Prism has been retained.");
+  }
+  if (objectId === "object-quiet-cistern") {
+    const lens = await getObjectState(userId, "object-palimpsest-lens");
+    if (OBJECT_STATE_RANK[(lens?.state ?? "unknown") as ObjectState] < OBJECT_STATE_RANK.understood) throw new Error("The Cistern needs the Palimpsest Lens to make the Archive signal legible.");
+  }
+  if (objectId === "object-astral-index") {
+    const cistern = await getObjectState(userId, "object-quiet-cistern");
+    if (OBJECT_STATE_RANK[(cistern?.state ?? "unknown") as ObjectState] < OBJECT_STATE_RANK.understood) throw new Error("The Astral Index is waiting for a quieted Lab signal.");
+  }
 }
 
 export async function observeVaultObject(userId: number, objectId: string) {
@@ -270,7 +292,7 @@ export async function materializeExperiment(userId: number, noteId: number) {
   return creation;
 }
 
-export async function setVaultSettings(userId: number, changes: Partial<{ soundEnabled: boolean; reducedMotion: boolean; highContrast: boolean; preferFallback: boolean; renderQuality: "auto" | "high" | "low"; introSeen: boolean }>) {
+export async function setVaultSettings(userId: number, changes: Partial<{ soundEnabled: boolean; ambientVolume: number; interactionVolume: number; reducedMotion: boolean; highContrast: boolean; preferFallback: boolean; renderQuality: "auto" | "high" | "low"; introSeen: boolean }>) {
   await ensureVaultBlueprint(userId);
   const db = await getDb();
   if (!db) throw new Error("Settings could not be saved. Please try again.");

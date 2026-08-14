@@ -21,7 +21,8 @@ import {
 } from "./db";
 
 const roomIdSchema = z.enum(["central-chamber", "archive", "lab", "observatory"]);
-const objectIdSchema = z.enum(["door-archive", "door-lab", "door-observatory", "object-memory-prism", "object-echo-sigil", "object-resonance-needle", "aria-entity"]);
+const objectIdSchema = z.enum(["door-archive", "door-lab", "door-observatory", "object-memory-prism", "object-echo-sigil", "object-resonance-needle", "object-palimpsest-lens", "object-quiet-cistern", "object-astral-index", "aria-entity"]);
+const understandableObjectIdSchema = z.enum(["object-memory-prism", "object-echo-sigil", "object-resonance-needle", "object-palimpsest-lens", "object-quiet-cistern", "object-astral-index"]);
 const actionSchema = z.enum(["none", "navigate_archive", "navigate_lab", "navigate_observatory", "show_discoveries"]);
 
 function ariaSystemContext(state: Awaited<ReturnType<typeof getVaultState>>, currentRoom: string) {
@@ -62,7 +63,7 @@ export const appRouter = router({
       await recordVaultAction(ctx.user.id, "observe_object", "world_interaction", input.objectId);
       return result;
     }),
-    understand: protectedProcedure.input(z.object({ objectId: z.enum(["object-memory-prism", "object-echo-sigil", "object-resonance-needle"]) })).mutation(async ({ ctx, input }) => {
+    understand: protectedProcedure.input(z.object({ objectId: understandableObjectIdSchema })).mutation(async ({ ctx, input }) => {
       const result = await understandVaultObject(ctx.user.id, input.objectId);
       await recordVaultAction(ctx.user.id, "understand_object", "world_interaction", input.objectId);
       return result;
@@ -79,7 +80,7 @@ export const appRouter = router({
       await recordVaultAction(ctx.user.id, "materialize_experiment", "the_lab", String(input.noteId));
       return creation;
     }),
-    settings: protectedProcedure.input(z.object({ soundEnabled: z.boolean().optional(), reducedMotion: z.boolean().optional(), highContrast: z.boolean().optional(), preferFallback: z.boolean().optional(), renderQuality: z.enum(["auto", "high", "low"]).optional(), introSeen: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
+    settings: protectedProcedure.input(z.object({ soundEnabled: z.boolean().optional(), ambientVolume: z.number().int().min(0).max(100).optional(), interactionVolume: z.number().int().min(0).max(100).optional(), reducedMotion: z.boolean().optional(), highContrast: z.boolean().optional(), preferFallback: z.boolean().optional(), renderQuality: z.enum(["auto", "high", "low"]).optional(), introSeen: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
       await setVaultSettings(ctx.user.id, input);
       await recordVaultAction(ctx.user.id, "update_settings", "access_deck", undefined, JSON.stringify(input));
       return { success: true } as const;

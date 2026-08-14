@@ -63,6 +63,14 @@ The final mastery release checkpoint is `7a4aba5c`. The production route at `htt
 
 ## Non-destructive clean-state journey coverage
 
+## Authored-network and spatial-audio expansion validation
+
+The expansion retains the existing Prism-to-Needle route and adds four persisted branches: Memory Prism → Palimpsest Lens, Palimpsest Lens → Echo Sigil, Resonance Needle → Quiet Cistern, and Quiet Cistern → Astral Index. Each new object has a corresponding authored artefact and an owner-scoped discovery prerequisite. In the renderer, the Lens appears only in THE ARCHIVE, the Cistern only in THE LAB, and the Astral Index only in THE OBSERVATORY; the room switch passes state and activation handlers into each native room, with no duplicate relic layer.
+
+Spatial audio is intentionally optional. Its Web Audio context is created or resumed only by an explicit world interaction or audio-control gesture, after the user has opted in. Per-user `soundEnabled`, `ambientVolume`, and `interactionVolume` settings are validated and persisted as bounded integer percentages. The implementation uses separate gain stages for ambient room tone and interaction cues, applies a mute gain when disabled, and silently returns when browser audio is unsupported or blocked. The non-3D fallback and semantic access controls do not depend on sound. This behavior is verified by implementation review and protected router tests; headless automation does not claim a fabricated audible-output result.
+
+The final expansion validation passes **31 assertions across five Vitest files**, `pnpm check`, and `pnpm build`. The production build retains the known lazy 3D chunk warning (`vault-3d`: 1,015.67 kB minified / 276.29 kB gzip); it is an existing documented trade-off rather than a regression introduced by the authored network or Web Audio hook.
+
 The protected route suite now exercises a clean-state journey without resetting the owner’s stored progression: chamber entry, initial Memory Prism observation and discovery, travel to THE LAB, an ARIA question, Lab materialization, return to the chamber, and a persisted state revisit. All transitions, ARIA recording, and final state retrieval remain owner-scoped. This gives the first-use contract reproducible regression coverage while avoiding destructive manipulation of a live account.
 
 ## Final authenticated chamber inspection

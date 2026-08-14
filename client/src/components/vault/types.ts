@@ -1,6 +1,6 @@
 export type RoomId = "central-chamber" | "archive" | "lab" | "observatory";
 export type AriaState = "idle" | "listening" | "thinking" | "responding" | "success" | "warning" | "error";
-export type VaultObjectId = "door-archive" | "door-lab" | "door-observatory" | "object-memory-prism" | "object-echo-sigil" | "object-resonance-needle" | "aria-entity";
+export type VaultObjectId = "door-archive" | "door-lab" | "door-observatory" | "object-memory-prism" | "object-echo-sigil" | "object-resonance-needle" | "object-palimpsest-lens" | "object-quiet-cistern" | "object-astral-index" | "aria-entity";
 
 export type InteractiveObjectDefinition = {
   id: VaultObjectId;
@@ -24,7 +24,7 @@ export type VaultState = {
   history: Array<{ id: number; eventType: string; title: string; detail: string; targetId: string | null; createdAt: Date }>;
   notes: Array<{ id: number; title: string; content: string; createdAt: Date; updatedAt: Date }>;
   creations: Array<{ id: number; sourceNoteId: number; title: string; description: string; status: "result" | "artifact"; createdAt: Date; updatedAt: Date }>;
-  settings: { soundEnabled: boolean; reducedMotion: boolean; highContrast: boolean; preferFallback: boolean; renderQuality: "auto" | "high" | "low"; introSeen: boolean; lastRoomId: string } | undefined;
+  settings: { soundEnabled: boolean; ambientVolume: number; interactionVolume: number; reducedMotion: boolean; highContrast: boolean; preferFallback: boolean; renderQuality: "auto" | "high" | "low"; introSeen: boolean; lastRoomId: string } | undefined;
 };
 
 export const roomNames: Record<RoomId, string> = {

@@ -187,4 +187,26 @@ describe("THE VAULT protected router", () => {
     expect(db.recordAriaMessage).toHaveBeenCalledWith(7, "lab", "aria", "The Prism has retained your first observation.", "none");
     expect(db.getVaultState).toHaveBeenCalledWith(7);
   });
+
+  it("persists opt-in spatial audio and independent bounded volume preferences only for the active Vault owner", async () => {
+    const caller = appRouter.createCaller(context(user));
+    await caller.vault.settings({ soundEnabled: true, ambientVolume: 36, interactionVolume: 72 });
+    expect(db.setVaultSettings).toHaveBeenCalledWith(7, { soundEnabled: true, ambientVolume: 36, interactionVolume: 72 });
+    const payload = db.recordVaultAction.mock.calls[0]?.[4];
+    expect(JSON.parse(payload ?? "{}")).toEqual({ soundEnabled: true, ambientVolume: 36, interactionVolume: 72 });
+  });
+
+  it("rejects invalid spatial-audio volume values before they can reach persistence", async () => {
+    const caller = appRouter.createCaller(context(user));
+    await expect(caller.vault.settings({ ambientVolume: 101 } as never)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(db.setVaultSettings).not.toHaveBeenCalled();
+  });
+
+  it("accepts authored relationship-branch objects through the same owner-scoped discovery contract", async () => {
+    const caller = appRouter.createCaller(context(user));
+    await caller.vault.observe({ objectId: "object-palimpsest-lens" });
+    await caller.vault.discover({ objectId: "object-quiet-cistern" });
+    expect(db.observeVaultObject).toHaveBeenCalledWith(7, "object-palimpsest-lens");
+    expect(db.discoverVaultObject).toHaveBeenCalledWith(7, "object-quiet-cistern");
+  });
 });
