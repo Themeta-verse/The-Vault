@@ -110,6 +110,22 @@ describe("THE VAULT protected router", () => {
     expect(db.recordAriaMessage).toHaveBeenLastCalledWith(7, "lab", "aria", "The threshold remains quiet.", "none");
   });
 
+  it("keeps a bounded, non-destructive ARIA response when the model is unavailable", async () => {
+    llm.invokeLLM.mockRejectedValue(new Error("provider unavailable"));
+    const caller = appRouter.createCaller(context(user));
+    const result = await caller.aria.send({ roomId: "lab", message: "What remains?" });
+    expect(result).toEqual({ answer: "The Lab's signal is unstable, but your question is preserved. Try again in a moment.", suggestedAction: "none" });
+    expect(db.recordAriaMessage).toHaveBeenLastCalledWith(7, "lab", "aria", expect.stringContaining("signal is unstable"), "none");
+    expect(db.recordVaultAction).toHaveBeenLastCalledWith(7, "aria_conversation", "the_lab", "aria-entity", "none");
+  });
+
+  it("rejects malformed ARIA text before it is persisted or passed to the model", async () => {
+    const caller = appRouter.createCaller(context(user));
+    await expect(caller.aria.send({ roomId: "lab", message: "x".repeat(1201) })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(db.recordAriaMessage).not.toHaveBeenCalled();
+    expect(llm.invokeLLM).not.toHaveBeenCalled();
+  });
+
   it("records object observation and understanding only for the active Vault owner", async () => {
     const caller = appRouter.createCaller(context(user));
     await caller.vault.observe({ objectId: "object-memory-prism" });
@@ -124,6 +140,12 @@ describe("THE VAULT protected router", () => {
     await caller.vault.materialize({ noteId: 4 });
     expect(db.materializeExperiment).toHaveBeenCalledWith(7, 4);
     expect(db.recordVaultAction).toHaveBeenCalledWith(7, "materialize_experiment", "the_lab", "4");
+  });
+
+  it("rejects malformed materialization identifiers before they can reach persistence", async () => {
+    const caller = appRouter.createCaller(context(user));
+    await expect(caller.vault.materialize({ noteId: 0 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(db.materializeExperiment).not.toHaveBeenCalled();
   });
 
   it("keeps the full clue-to-mastery sequence owner-scoped and explicit", async () => {

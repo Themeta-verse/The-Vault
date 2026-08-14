@@ -1,6 +1,6 @@
 import { canEnterWorldRoom, getChamberGuidance, getWorldSignal } from "./worldExperience";
 import { describe, expect, it } from "vitest";
-import { shouldEnterPersistentWorld } from "./worldExperience";
+import { canEnterWorldRoom, getChamberGuidance, getObjectInteractionCue, getWorldSignal, shouldEnterPersistentWorld } from "./worldExperience";
 
 describe("world-first experience helpers", () => {
   it("enters saved world context directly for returning users", () => {
@@ -22,8 +22,14 @@ describe("world-first experience helpers", () => {
     expect(canEnterWorldRoom("observatory", ["archive", "lab"])).toBe(false);
   });
 
-  it("prioritizes a return-visit signal over the regular progression guidance", () => {
-    expect(getChamberGuidance("resonant", false)).toContain("echo");
-    expect(getChamberGuidance("resonant", true)).toContain("return");
+  it("keeps the next progression signal clear while acknowledging a return visit", () => {
+    expect(getChamberGuidance("resonant", false)).toContain("Echo");
+    expect(getChamberGuidance("resonant", true)).toContain("kept your route");
+  });
+
+  it("stages a first object encounter before treating the object as retained", () => {
+    expect(getObjectInteractionCue()).toMatchObject({ stage: "approach", caption: "UNRESOLVED" });
+    expect(getObjectInteractionCue("observed")).toMatchObject({ stage: "attune", caption: "ATTUNED — RETURN" });
+    expect(getObjectInteractionCue("discovered")).toMatchObject({ stage: "retained", caption: "RETAINED" });
   });
 });

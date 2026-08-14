@@ -123,8 +123,8 @@ export const appRouter = router({
         const output = JSON.parse(typeof rawContent === "string" ? rawContent : "{}");
         if (typeof output.answer === "string" && output.answer.trim()) answer = output.answer.slice(0, 1200);
         if (actionSchema.safeParse(output.suggestedAction).success) suggestedAction = output.suggestedAction;
-      } catch (error) {
-        console.warn("[ARIA] Response unavailable:", error);
+      } catch {
+        // The bounded fallback above preserves the conversation without exposing provider details.
       }
       if (suggestedAction !== "none" && !(await hasVaultPermission(ctx.user.id, "aria_navigation"))) suggestedAction = "none";
       await recordAriaMessage(ctx.user.id, input.roomId, "aria", answer, suggestedAction);

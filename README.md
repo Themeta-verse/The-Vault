@@ -51,10 +51,9 @@ React application viewport
 
 ## Local setup
 
-Install Node.js 22 or newer and pnpm. Copy the safe template, provide values through the platform secret manager or local environment, then install and run the application.
+Install Node.js 22 or newer and pnpm. Provide local values through the platform secret manager or a local environment file, then install and run the application.
 
 ```bash
-cp .env.example .env
 pnpm install
 pnpm dev
 ```
@@ -73,7 +72,7 @@ Do not commit `.env`. The managed deployment supplies most Manus-specific values
 | `VITE_FRONTEND_FORGE_API_KEY` | Browser-scoped Forge access supplied by the platform | Browser configuration |
 | `VITE_ANALYTICS_*` | Optional analytics configuration | Browser configuration |
 
-The names and non-secret placeholders are maintained in [`.env.example`](.env.example). Never place a production token, database password, or signing key in source control, client code, screenshots, or browser logs.
+Never place a production token, database password, or signing key in source control, client code, screenshots, or browser logs. The managed deployment injects its configured values directly; use the platform secret manager rather than committing environment files.
 
 ## Commands
 
@@ -89,7 +88,7 @@ The names and non-secret placeholders are maintained in [`.env.example`](.env.ex
 
 The database models rooms, objects, artefacts, discoveries, user object states, relationships, notes, creations, history, settings, permissions, actions, and ARIA conversations. Progression follows a persisted lifecycle from `observed` to `interacted`, `discovered`, `understood`, `unlocked`, and `mastered`.
 
-The compound discovery path connects the Memory Prism, Echo Sigil, ARIA interpretation, Resonance Needle, and a materialized Lab result. The renderer observes this data and changes paths, context, light, and wayfinding without treating client-side visual state as authorization.
+The compound discovery path connects the Memory Prism, Echo Sigil, ARIA interpretation, Resonance Needle, and a materialized Lab result. The renderer observes this data and changes paths, context, light, wayfinding, Archive records, Lab creations, and Observatory landmarks without treating client-side visual state as authorization. Returning users re-enter their persisted room directly rather than passing through an intermediate page-style gate.
 
 ## Accessibility and responsive behavior
 
@@ -97,11 +96,11 @@ The primary interaction is spatial. Accessibility is not replaced with a hidden 
 
 ## Security model
 
-All stateful Vault operations use protected tRPC procedures. The server scopes reads and mutations to the authenticated user, validates known object identifiers, and preserves progression transitions in persistence. ARIA receives bounded world context and returns only schema-validated suggested actions. The client can request room changes, but the server is the authority for user state, unlocks, discoveries, notes, and creations.
+All stateful Vault operations use protected tRPC procedures. The server scopes reads and mutations to the authenticated user, validates known object identifiers, and preserves progression transitions in persistence. ARIA receives bounded world context, treats all user content as untrusted data, and returns only schema-validated suggested actions. The client can request room changes, but the server is the authority for user state, unlocks, discoveries, notes, and creations. See [SECURITY_FINAL_AUDIT.md](SECURITY_FINAL_AUDIT.md) for the release assessment.
 
 ## Testing and validation
 
-The suite includes server authentication and Vault-router coverage, progression and relationship assertions, pure wayfinding tests, and world-state helper tests. Run the following before a release:
+The suite includes server authentication and Vault-router coverage, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, and bounded client failure-copy contracts. The mastery pass verified **27 assertions** across five test files, TypeScript, production build output, authenticated desktop room flows, persisted return state, non-3D restoration, and the access-deck focus boundary. Run the following before a release:
 
 ```bash
 pnpm test
@@ -109,15 +108,15 @@ pnpm check
 pnpm build
 ```
 
-Visual validation should also inspect the entry sequence, desktop viewport, mobile viewport, reduced-motion mode, high-contrast mode, and non-3D fallback. A fully authenticated walkthrough is required to verify persisted artefact inspection, ARIA, creation, and Observatory records in a live session.
+Visual validation should also inspect the entry sequence, desktop viewport, mobile viewport, reduced-motion mode, high-contrast mode, and non-3D fallback. The release evidence is collected in [MASTERY_AUDIT.md](MASTERY_AUDIT.md) and [RECONSTRUCTION_AUDIT.md](RECONSTRUCTION_AUDIT.md). Concrete authenticated tablet/mobile room captures remain a recommended follow-up; the documented automated captures cover the protected entry shell at four viewport sizes.
 
 ## Deployment
 
-THE VAULT is configured for managed Manus hosting. Saving a verified checkpoint publishes the current project version automatically. The project also maintains a dedicated GitHub remote at [`Themeta-verse/The-Vault`](https://github.com/Themeta-verse/The-Vault); synchronization requires authenticated write access to that repository.
+THE VAULT is configured for managed Manus hosting. Saving a verified checkpoint publishes the current project version automatically. The project also maintains a dedicated GitHub remote at [`Themeta-verse/The-Vault`](https://github.com/Themeta-verse/The-Vault); each release checkpoint is synchronized after verification.
 
 ## Limitations and roadmap
 
-The current renderer is intentionally bounded: it uses procedural geometry and controlled effects instead of heavy downloaded assets, preserving a predictable performance envelope. The visual design continues to require authenticated device walkthroughs for touch and persisted fallback evidence. Future work can add richer navigation controls, more artefact geometry, sound design, room-specific camera tours, a broader relationship graph, and authored world events without replacing the existing persistence contract.
+The current renderer is intentionally bounded: it uses procedural geometry and controlled effects instead of heavy downloaded assets, preserving a predictable performance envelope. The principal remaining performance trade-off is the lazy-loaded 3D code chunk, which is intentionally accepted to retain the spatial world without splitting interaction contracts across multiple views. Future work can add richer navigation controls, more artefact geometry, sound design, room-specific camera tours, a broader relationship graph, and authored world events without replacing the existing persistence contract.
 
 ## Repository hygiene
 
