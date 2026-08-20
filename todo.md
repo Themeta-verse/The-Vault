@@ -118,3 +118,14 @@
 - [x] Verify and document the transformed reduced-motion, audio opt-in, failure-state, security, and performance behavior without overstating browser-audio automation.
 - [x] Verify the reduced-motion control in the authenticated transformed world and restore the owner’s original preference afterward.
 - [x] Record fresh post-transformation evidence for audio opt-in boundaries, client-safe failure coverage, protected ownership boundaries, and the measured lazy-renderer trade-off.
+- [x] Audit the actual frontend, backend, database, authentication, API, AI, storage, deployment, domain, build, analytics, logging, secrets, and external-connection architecture without changing product features.
+- [x] Create `/docs/ARCHITECTURE.md` describing the real request, authentication, authorization, persistence, AI, deployment, and error flows, including clear ownership and replaceability boundaries.
+- [x] Create `/docs/DATABASE.md` documenting the real provider/technology posture, schema, relationships, ownership, constraints, migrations, environment separation, backup/recovery limitations, and data-isolation controls.
+- [x] Audit and safely update `.env.example`, repository configuration, health visibility, error handling, logging guidance, and operational scripts where supported by the actual runtime; the managed `.env.example` restriction is recorded with a safe tracked alternative.
+- [ ] Verify reproducibility, migration integrity, critical-write safety, user-data isolation, dependency ownership, clean GitHub synchronization, and explicitly document unmanaged or Manus-controlled limitations.
+- [ ] Update ownership documentation, validate all code and operational checks, checkpoint the infrastructure-control pass, and synchronize GitHub main.
+- [x] Add an unauthenticated HTTP health endpoint that distinguishes application readiness from database availability without exposing configuration.
+- [x] Make the critical discovery persistence path transactional and cover its atomic failure boundary with a focused regression test.
+- [x] Add GitHub Actions CI for frozen install, formatting lint, typecheck, tests, and production build.
+- [x] Record the managed `.env.example` path restriction and preserve a safe Git-tracked configuration template with no real values.
+- [x] Attempt supported workspace migration for obsolete package-level pnpm overrides and patch metadata; retain the existing lockfile-compatible metadata after the current frozen lockfile rejected the workspace form, and record the warning as a non-blocking maintenance follow-up.

@@ -288,22 +288,37 @@ export async function discoverVaultObject(userId: number, objectId: string) {
   const [object] = await db.select().from(vaultObjects).where(eq(vaultObjects.id, objectId)).limit(1);
   if (!object) throw new Error("That object is not part of this Vault.");
   await assertDiscoveryPrerequisite(userId, objectId);
-  const previous = await db.select().from(discoveries).where(and(eq(discoveries.userId, userId), eq(discoveries.objectId, objectId))).limit(1);
-  if (previous[0]) return { isNew: false, object, artifact: null, unlockedRoomId: null };
-  const [artifact] = await db.select().from(artifacts).where(eq(artifacts.objectId, objectId)).limit(1);
-  await advanceObjectState(userId, objectId, "interacted");
-  await db.insert(discoveries).values({ userId, objectId, artifactId: artifact?.id });
-  await advanceObjectState(userId, objectId, "discovered");
-  await db.insert(vaultHistory).values({ userId, eventType: "discovery", title: `Discovered: ${object.name}`, detail: object.description, targetId: object.id });
-  if (artifact) {
-    await db.insert(userArtifactFragments).values({ userId, artifactId: artifact.id }).onDuplicateKeyUpdate({ set: { userId } });
-    await db.insert(vaultHistory).values({ userId, eventType: "fragment", title: `Fragment retained: ${artifact.fragmentTitle}`, detail: artifact.fragmentBody, targetId: artifact.id });
-  }
-  if (object.unlocksRoomId) {
-    await db.update(userRoomStates).set({ isUnlocked: true }).where(and(eq(userRoomStates.userId, userId), eq(userRoomStates.roomId, object.unlocksRoomId)));
-    await db.insert(vaultHistory).values({ userId, eventType: "unlock", title: `Threshold unsealed: ${object.unlocksRoomId === "observatory" ? "THE OBSERVATORY" : object.unlocksRoomId}`, detail: "A new room has entered your possible routes.", targetId: object.unlocksRoomId });
-  }
-  return { isNew: true, object, artifact: artifact ?? null, unlockedRoomId: object.unlocksRoomId };
+  return db.transaction(async tx => {
+    const previous = await tx.select().from(discoveries).where(and(eq(discoveries.userId, userId), eq(discoveries.objectId, objectId))).limit(1);
+    if (previous[0]) return { isNew: false, object, artifact: null, unlockedRoomId: null };
+
+    const [artifact] = await tx.select().from(artifacts).where(eq(artifacts.objectId, objectId)).limit(1);
+    const advanceState = async (nextState: ObjectState) => {
+      const [record] = await tx.select().from(userObjectStates).where(and(eq(userObjectStates.userId, userId), eq(userObjectStates.objectId, objectId))).limit(1);
+      const currentState = (record?.state ?? "unknown") as ObjectState;
+      if (OBJECT_STATE_RANK[nextState] <= OBJECT_STATE_RANK[currentState]) return currentState;
+      const now = new Date();
+      const timestamps: Partial<Record<"observedAt" | "interactedAt" | "discoveredAt" | "understoodAt" | "masteredAt", Date>> = {};
+      if (nextState === "interacted") timestamps.interactedAt = now;
+      if (nextState === "discovered") timestamps.discoveredAt = now;
+      await tx.update(userObjectStates).set({ state: nextState, ...timestamps }).where(and(eq(userObjectStates.userId, userId), eq(userObjectStates.objectId, objectId)));
+      return nextState;
+    };
+
+    await advanceState("interacted");
+    await tx.insert(discoveries).values({ userId, objectId, artifactId: artifact?.id });
+    await advanceState("discovered");
+    await tx.insert(vaultHistory).values({ userId, eventType: "discovery", title: `Discovered: ${object.name}`, detail: object.description, targetId: object.id });
+    if (artifact) {
+      await tx.insert(userArtifactFragments).values({ userId, artifactId: artifact.id }).onDuplicateKeyUpdate({ set: { userId } });
+      await tx.insert(vaultHistory).values({ userId, eventType: "fragment", title: `Fragment retained: ${artifact.fragmentTitle}`, detail: artifact.fragmentBody, targetId: artifact.id });
+    }
+    if (object.unlocksRoomId) {
+      await tx.update(userRoomStates).set({ isUnlocked: true }).where(and(eq(userRoomStates.userId, userId), eq(userRoomStates.roomId, object.unlocksRoomId)));
+      await tx.insert(vaultHistory).values({ userId, eventType: "unlock", title: `Threshold unsealed: ${object.unlocksRoomId === "observatory" ? "THE OBSERVATORY" : object.unlocksRoomId}`, detail: "A new room has entered your possible routes.", targetId: object.unlocksRoomId });
+    }
+    return { isNew: true, object, artifact: artifact ?? null, unlockedRoomId: object.unlocksRoomId };
+  });
 }
 
 export async function saveExperimentNote(userId: number, title: string, content: string) {

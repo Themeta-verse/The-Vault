@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { getHealthStatus } from "./health";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -34,6 +35,10 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.get("/health", async (_req, res) => {
+    const health = await getHealthStatus();
+    res.status(health.database === "healthy" ? 200 : 503).json(health);
+  });
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   // tRPC API
@@ -42,6 +47,18 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      onError({ error, path, type }) {
+        console.error(
+          JSON.stringify({
+            level: "error",
+            event: "trpc_request_failed",
+            timestamp: new Date().toISOString(),
+            procedure: path ?? "unknown",
+            requestType: type,
+            code: error.code,
+          }),
+        );
+      },
     })
   );
   // development mode uses Vite, production mode uses static files
@@ -63,4 +80,13 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+startServer().catch(error => {
+  console.error(
+    JSON.stringify({
+      level: "error",
+      event: "server_start_failed",
+      timestamp: new Date().toISOString(),
+      errorType: error instanceof Error ? error.name : "unknown",
+    }),
+  );
+});
