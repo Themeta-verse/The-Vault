@@ -1,6 +1,6 @@
 import { canEnterWorldRoom, getChamberGuidance, getWorldSignal } from "./worldExperience";
 import { describe, expect, it } from "vitest";
-import { canEnterWorldRoom, getChamberGuidance, getObjectInteractionCue, getWorldSignal, shouldEnterPersistentWorld } from "./worldExperience";
+import { canEnterWorldRoom, getChamberGuidance, getObjectInteractionCue, getRetainedObjectStates, getWorldSignal, shouldEnterPersistentWorld } from "./worldExperience";
 
 describe("world-first experience helpers", () => {
   it("enters saved world context directly for returning users", () => {
@@ -14,6 +14,11 @@ describe("world-first experience helpers", () => {
     expect(getWorldSignal({ "object-memory-prism": "discovered" })).toBe("awakened");
     expect(getWorldSignal({ "object-memory-prism": "understood", "object-echo-sigil": "understood" })).toBe("resonant");
     expect(getWorldSignal({ "object-echo-sigil": "understood", "object-resonance-needle": "mastered" })).toBe("mastered");
+  });
+
+  it("treats the owner-scoped discovery ledger as durable retained evidence when rendering a legacy state record", () => {
+    expect(getRetainedObjectStates({ "object-memory-prism": "unknown" }, ["object-memory-prism"])).toEqual({ "object-memory-prism": "discovered" });
+    expect(getRetainedObjectStates({ "object-memory-prism": "understood" }, ["object-memory-prism"])).toEqual({ "object-memory-prism": "understood" });
   });
 
   it("only enters destination rooms after their persistent threshold is unlocked", () => {

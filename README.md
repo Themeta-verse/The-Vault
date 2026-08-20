@@ -6,6 +6,8 @@
 
 THE VAULT is not organized as a dashboard or a set of content pages. The Vault’s central chamber is the navigational hub. **THE ARCHIVE**, **THE LAB**, and **THE OBSERVATORY** are distinct places reached through world thresholds. Objects carry interaction, visual state, relationship, and consequence; contextual UI appears only when an object has been approached.
 
+The current presentation system is the **Cartographic Reliquary**: an inherited instrument of memory rendered through mineral-dark architecture, cadastral lines, engraved labels, a recurring datum mark, and deliberately restrained signal light. The Memory Dais is the chamber’s spatial anchor; its retained routes and mnemonic field make a prior visit visible without reintroducing page navigation, dashboard cards, or a generic chat surface.
+
 | Place | Purpose | Primary persistent interactions |
 |---|---|---|
 | **The Vault’s central chamber** | Spatial hub and progression surface | Threshold travel, Memory Prism, Echo Sigil, Resonance Needle, ARIA, wayfinding. |
@@ -102,7 +104,7 @@ All stateful Vault operations use protected tRPC procedures. The server scopes r
 
 ## Testing and validation
 
-The suite includes server authentication and Vault-router coverage, a non-destructive clean-state journey, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, bounded client failure-copy contracts, and protected contracts for authored branch objects plus audio preferences. The expansion release verifies **31 assertions** across five test files, TypeScript, and production build output. Browser audio remains intentionally excluded from headless sound-output assertions because its explicit user-gesture requirement is part of the feature contract. Run the following before a release:
+The suite includes server authentication and Vault-router coverage, a non-destructive clean-state journey, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, bounded client failure-copy contracts, protected contracts for authored branch objects and audio preferences, and legacy discovery-state reconciliation. The Cartographic Reliquary release verifies **34 assertions across six test files**, TypeScript, and production build output. Browser audio remains intentionally excluded from headless sound-output assertions because its explicit user-gesture requirement is part of the feature contract. Run the following before a release:
 
 ```bash
 pnpm test

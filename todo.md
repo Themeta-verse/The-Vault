@@ -94,3 +94,15 @@
 - [x] Ensure audio is opt-in, begins only after an explicit user gesture, respects reduced motion/non-3D preferences where appropriate, and degrades silently when browser audio is unavailable.
 - [x] Add focused owner-scoped authored-object and audio-preference tests, then validate the release with 31 Vitest assertions, TypeScript, and a production build; browser-audio output remains intentionally gesture-dependent rather than fabricated in automation.
 - [x] Update release documentation and audits for the expanded data network and audio controls, save a checkpoint, and synchronize GitHub main.
+- [x] Audit the full current product against the creative-director transformation brief and document retained strengths, weak patterns, and removal candidates in CREATIVE_TRANSFORMATION_AUDIT.md.
+- [x] Establish and implement the Cartographic Reliquary art direction, native instrument language, registration threshold, and environmental storytelling system for THE VAULT.
+- [x] Strengthen the central chamber as a memorable mental map with the Memory Dais, differentiated thresholds, retained route lines, stateful landmarks, and visible world-memory reactions.
+- [x] Reconcile legacy persisted discoveries with object states so visible chamber memory, relationship routes, and ARIA context cannot regress to an unresolved state after a discovery was retained.
+- [x] Refine THE ARCHIVE, THE LAB, THE OBSERVATORY, and ARIA into authored record, listening-aperture, mnemonic-armature, and contained-intelligence interactions without reintroducing dashboard, chat-widget, or generic-panel patterns.
+- [x] Improve and verify the world’s responsive, mobile, keyboard, reduced-motion, fallback, audio, performance, security, and failure-state behavior without weakening existing persistence or authorization; the non-3D route map, restored rendered world, mobile threshold, and Escape folio release were checked in the authenticated preview.
+- [x] Add focused regression coverage, conduct documented visual and runtime validation, and update release documentation for the Cartographic Reliquary transformation.
+- [ ] Save the transformation checkpoint and synchronize the published release with GitHub main.
+- [x] Run a fresh complete validation pass after the transformation and state-reconciliation changes, covering 34 Vitest assertions across six files, TypeScript, and the production build.
+- [x] Verify and document the transformed reduced-motion, audio opt-in, failure-state, security, and performance behavior without overstating browser-audio automation.
+- [x] Verify the reduced-motion control in the authenticated transformed world and restore the owner’s original preference afterward.
+- [x] Record fresh post-transformation evidence for audio opt-in boundaries, client-safe failure coverage, protected ownership boundaries, and the measured lazy-renderer trade-off.

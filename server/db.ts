@@ -64,6 +64,24 @@ const RELATIONSHIP_BLUEPRINT = [
 const OBJECT_STATE_RANK = { unknown: 0, observed: 1, interacted: 2, discovered: 3, understood: 4, unlocked: 5, mastered: 6 } as const;
 type ObjectState = keyof typeof OBJECT_STATE_RANK;
 
+type StateRecord = { objectId: string; state: string; discoveredAt: Date | null };
+type DiscoveryRecord = { objectId: string; discoveredAt: Date };
+
+/**
+ * Older Vault sessions can contain a discovery written before its companion
+ * object-state transition completed. A discovery is durable evidence that the
+ * object has reached at least `discovered`; normalize this invariant whenever
+ * state is assembled so visual, relationship, and ARIA consumers agree.
+ */
+export function normalizeDiscoveredObjectStates<T extends StateRecord>(objectStates: T[], discoveryList: DiscoveryRecord[]): T[] {
+  const discoveryByObjectId = new Map(discoveryList.map(discovery => [discovery.objectId, discovery.discoveredAt]));
+  return objectStates.map(state => {
+    const discoveredAt = discoveryByObjectId.get(state.objectId);
+    if (!discoveredAt || OBJECT_STATE_RANK[(state.state as ObjectState) ?? "unknown"] >= OBJECT_STATE_RANK.discovered) return state;
+    return { ...state, state: "discovered", discoveredAt: state.discoveredAt ?? discoveredAt } as T;
+  });
+}
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -145,9 +163,14 @@ export async function getVaultState(userId: number) {
     db.select().from(userCreations).where(eq(userCreations.userId, userId)).orderBy(desc(userCreations.updatedAt)),
     db.select().from(vaultSettings).where(eq(vaultSettings.userId, userId)).limit(1),
   ]);
-  const objectStateById = new Map(objectStates.map(entry => [entry.objectId, entry.state as ObjectState]));
+  const normalizedObjectStates = normalizeDiscoveredObjectStates(objectStates, discoveryList);
+  const repairedStates = normalizedObjectStates.filter((entry, index) => entry !== objectStates[index]);
+  if (repairedStates.length > 0) {
+    await Promise.all(repairedStates.map(entry => db.update(userObjectStates).set({ state: "discovered", discoveredAt: entry.discoveredAt }).where(and(eq(userObjectStates.userId, userId), eq(userObjectStates.objectId, entry.objectId)))));
+  }
+  const objectStateById = new Map(normalizedObjectStates.map(entry => [entry.objectId, entry.state as ObjectState]));
   const relationships = relationshipList.filter(relationship => OBJECT_STATE_RANK[objectStateById.get(relationship.sourceObjectId) ?? "unknown"] >= OBJECT_STATE_RANK[relationship.requiredSourceState as ObjectState]);
-  return { rooms: roomList, objects: objectList, artifacts: artifactList, roomStates, discoveries: discoveryList, objectStates, relationships, history: historyList, notes: noteList, creations: creationList, settings: settings[0] };
+  return { rooms: roomList, objects: objectList, artifacts: artifactList, roomStates, discoveries: discoveryList, objectStates: normalizedObjectStates, relationships, history: historyList, notes: noteList, creations: creationList, settings: settings[0] };
 }
 
 async function getObjectState(userId: number, objectId: string) {

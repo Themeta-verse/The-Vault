@@ -3,6 +3,21 @@ import type { RoomId } from "./types";
 export type WorldSignal = "dormant" | "awakened" | "resonant" | "mastered";
 export type ObjectInteractionStage = "approach" | "attune" | "retained";
 
+const objectStateRank: Record<string, number> = { unknown: 0, observed: 1, interacted: 2, discovered: 3, understood: 4, unlocked: 5, mastered: 6 };
+
+/**
+ * The server reconciles this invariant durably. This client safeguard keeps a
+ * just-returned or legacy record visually truthful while the normalized state
+ * response is being persisted: a discovery is always at least discovered.
+ */
+export function getRetainedObjectStates(objectStates: Record<string, string>, discoveredObjectIds: string[]) {
+  const retained = { ...objectStates };
+  for (const objectId of discoveredObjectIds) {
+    if ((objectStateRank[retained[objectId] ?? "unknown"] ?? 0) < objectStateRank.discovered) retained[objectId] = "discovered";
+  }
+  return retained;
+}
+
 export function shouldEnterPersistentWorld(entered: boolean, introSeen: boolean) {
   return entered || introSeen;
 }
