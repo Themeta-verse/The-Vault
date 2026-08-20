@@ -50,6 +50,9 @@ export const artifacts = mysqlTable("artifacts", {
   description: text("description").notNull(),
   category: varchar("category", { length: 48 }).notNull(),
   accent: varchar("accent", { length: 16 }).notNull(),
+  fragmentTitle: varchar("fragmentTitle", { length: 120 }).notNull(),
+  fragmentEra: varchar("fragmentEra", { length: 96 }).notNull(),
+  fragmentBody: text("fragmentBody").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -76,6 +79,17 @@ export const discoveries = mysqlTable(
     discoveredAt: timestamp("discoveredAt").defaultNow().notNull(),
   },
   table => [uniqueIndex("user_object_discovery_unique").on(table.userId, table.objectId)],
+);
+
+export const userArtifactFragments = mysqlTable(
+  "userArtifactFragments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(),
+    artifactId: varchar("artifactId", { length: 64 }).notNull(),
+    discoveredAt: timestamp("discoveredAt").defaultNow().notNull(),
+  },
+  table => [uniqueIndex("user_artifact_fragment_unique").on(table.userId, table.artifactId)],
 );
 
 export const userObjectStates = mysqlTable(
@@ -112,7 +126,7 @@ export const objectRelationships = mysqlTable(
 export const vaultHistory = mysqlTable("vaultHistory", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  eventType: mysqlEnum("eventType", ["entry", "discovery", "visit", "note", "conversation", "unlock", "setting"]).notNull(),
+  eventType: mysqlEnum("eventType", ["entry", "discovery", "fragment", "visit", "note", "conversation", "unlock", "setting"]).notNull(),
   title: varchar("title", { length: 160 }).notNull(),
   detail: text("detail").notNull(),
   targetId: varchar("targetId", { length: 64 }),
@@ -171,6 +185,8 @@ export const vaultSettings = mysqlTable("vaultSettings", {
   preferFallback: boolean("preferFallback").default(false).notNull(),
   renderQuality: mysqlEnum("renderQuality", ["auto", "high", "low"]).default("auto").notNull(),
   introSeen: boolean("introSeen").default(false).notNull(),
+  handsetGuideStage: mysqlEnum("handsetGuideStage", ["attention", "retain", "north", "complete", "dismissed"]).default("attention").notNull(),
+  observatoryEra: mysqlEnum("observatoryEra", ["founding", "returning"]).default("founding").notNull(),
   lastRoomId: varchar("lastRoomId", { length: 64 }).default("central-chamber").notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

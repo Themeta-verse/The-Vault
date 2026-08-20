@@ -1,6 +1,5 @@
-import { canEnterWorldRoom, getChamberGuidance, getWorldSignal } from "./worldExperience";
 import { describe, expect, it } from "vitest";
-import { canEnterWorldRoom, getChamberGuidance, getObjectInteractionCue, getRetainedObjectStates, getWorldSignal, shouldEnterPersistentWorld } from "./worldExperience";
+import { canEnterWorldRoom, canReadReturningRegister, getChamberGuidance, getHandsetGuide, getObjectInteractionCue, getRetainedObjectStates, getWorldSignal, shouldEnterPersistentWorld } from "./worldExperience";
 
 describe("world-first experience helpers", () => {
   it("enters saved world context directly for returning users", () => {
@@ -36,5 +35,18 @@ describe("world-first experience helpers", () => {
     expect(getObjectInteractionCue()).toMatchObject({ stage: "approach", caption: "UNRESOLVED" });
     expect(getObjectInteractionCue("observed")).toMatchObject({ stage: "attune", caption: "ATTUNED — RETURN" });
     expect(getObjectInteractionCue("discovered")).toMatchObject({ stage: "retained", caption: "RETAINED" });
+  });
+
+  it("keeps the handset field route actionable until its owner reaches the Observatory or explicitly completes it", () => {
+    expect(getHandsetGuide("attention", "unknown", false, false)).toMatchObject({ marker: "1 / 3", actionLabel: "Attend the Prism" });
+    expect(getHandsetGuide("retain", "observed", false, false)).toMatchObject({ marker: "2 / 3", actionLabel: "Retain the signal" });
+    expect(getHandsetGuide("north", "discovered", true, false)).toMatchObject({ marker: "3 / 3", actionLabel: "Enter Observatory" });
+    expect(getHandsetGuide("complete", "discovered", true, true)).toBeNull();
+  });
+
+  it("opens the Returning Register only after sufficient retained discovery evidence exists", () => {
+    expect(canReadReturningRegister(0)).toBe(false);
+    expect(canReadReturningRegister(1)).toBe(false);
+    expect(canReadReturningRegister(2)).toBe(true);
   });
 });

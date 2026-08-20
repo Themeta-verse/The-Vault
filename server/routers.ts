@@ -7,6 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   discoverVaultObject,
+  advanceHandsetGuide,
   getAriaMessages,
   getVaultState,
   hasVaultPermission,
@@ -80,10 +81,15 @@ export const appRouter = router({
       await recordVaultAction(ctx.user.id, "materialize_experiment", "the_lab", String(input.noteId));
       return creation;
     }),
-    settings: protectedProcedure.input(z.object({ soundEnabled: z.boolean().optional(), ambientVolume: z.number().int().min(0).max(100).optional(), interactionVolume: z.number().int().min(0).max(100).optional(), reducedMotion: z.boolean().optional(), highContrast: z.boolean().optional(), preferFallback: z.boolean().optional(), renderQuality: z.enum(["auto", "high", "low"]).optional(), introSeen: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
+    settings: protectedProcedure.input(z.object({ soundEnabled: z.boolean().optional(), ambientVolume: z.number().int().min(0).max(100).optional(), interactionVolume: z.number().int().min(0).max(100).optional(), reducedMotion: z.boolean().optional(), highContrast: z.boolean().optional(), preferFallback: z.boolean().optional(), renderQuality: z.enum(["auto", "high", "low"]).optional(), observatoryEra: z.enum(["founding", "returning"]).optional(), introSeen: z.boolean().optional() })).mutation(async ({ ctx, input }) => {
       await setVaultSettings(ctx.user.id, input);
       await recordVaultAction(ctx.user.id, "update_settings", "access_deck", undefined, JSON.stringify(input));
       return { success: true } as const;
+    }),
+    advanceHandsetGuide: protectedProcedure.input(z.object({ action: z.enum(["advance", "dismiss"]) })).mutation(async ({ ctx, input }) => {
+      const result = await advanceHandsetGuide(ctx.user.id, input.action);
+      await recordVaultAction(ctx.user.id, "advance_handset_guide", "handset_field_strip", "handset-guide", input.action);
+      return result;
     }),
   }),
   aria: router({

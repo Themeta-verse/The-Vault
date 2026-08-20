@@ -88,11 +88,15 @@ Never place a production token, database password, or signing key in source cont
 
 ## Data and progression
 
-The database models rooms, objects, artefacts, discoveries, user object states, relationships, notes, creations, history, settings, permissions, actions, and ARIA conversations. Progression follows a persisted lifecycle from `observed` to `interacted`, `discovered`, `understood`, `unlocked`, and `mastered`.
+The database models rooms, objects, artefacts, discoveries, **owner-scoped artifact-fragment collection records**, user object states, relationships, notes, creations, history, settings, permissions, actions, and ARIA conversations. Progression follows a persisted lifecycle from `observed` to `interacted`, `discovered`, `understood`, `unlocked`, and `mastered`.
 
 The original compound discovery path now expands without replacing its existing Prism-to-Needle sequence. The **Memory Prism** reveals the **Palimpsest Lens** in THE ARCHIVE; the Lens deepens the Echo Sigil’s interpretive route in THE LAB. In parallel, the **Resonance Needle** reveals the **Quiet Cistern**, whose interpretation exposes the **Astral Index** in THE OBSERVATORY. These authored objects carry their own artefacts and persisted relationship records, and are rendered once in their native rooms with the same owner-scoped progression contract as the original chain.
 
 Spatial audio is optional and begins only after an explicit interaction. The access deck stores a per-user audio preference plus independent integer percentage controls for ambient tone and interaction cues. The browser-only Web Audio layer is gesture-gated, uses room-specific ambient tones and stereo interaction cues, honours the persisted mute state, and quietly does nothing when audio is unavailable. It uses no downloaded audio assets and does not make sound a requirement for discovery, navigation, or the semantic fallback.
+
+On a first authenticated handset visit, a compact **field strip** offers three persisted, dismissible waypoints: attend the Memory Prism, retain its signal, then trace the Observatory route. The guide never advances discovery on the visitor’s behalf; it only names the next existing action and shares its state with the non-3D route layer. THE OBSERVATORY now has a persisted two-position **Chronicle Dial**. *The First Register* makes the foundational route legible, while *The Returning Register* becomes selectable after two retained discoveries and maps carried, made, and returning memory without converting the room into a timeline dashboard.
+
+Every artifact now contains an authored folio heading, era tag, and marginal extract. A fragment becomes a durable owner-scoped collection record when its artifact is discovered, adds a Vault-history event, survives refresh, and is returned in the same protected world-state response used by THE ARCHIVE, THE OBSERVATORY, and ARIA. The six shipped fragments are authored application data rather than transient client copy.
 
 ## Accessibility and responsive behavior
 
@@ -104,7 +108,7 @@ All stateful Vault operations use protected tRPC procedures. The server scopes r
 
 ## Testing and validation
 
-The suite includes server authentication and Vault-router coverage, a non-destructive clean-state journey, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, bounded client failure-copy contracts, protected contracts for authored branch objects and audio preferences, and legacy discovery-state reconciliation. The Cartographic Reliquary release verifies **34 assertions across six test files**, TypeScript, and production build output. Browser audio remains intentionally excluded from headless sound-output assertions because its explicit user-gesture requirement is part of the feature contract. Run the following before a release:
+The suite includes server authentication and Vault-router coverage, a non-destructive clean-state journey, progression and relationship assertions, malformed-input and ARIA-fallback cases, pure wayfinding tests, world-state helper tests, bounded client failure-copy contracts, protected contracts for authored branch objects, audio preferences, handset-guide/Chronicle-Dial derivation, owner-scoped fragment collection, and legacy discovery-state reconciliation. The current expansion verifies **39 assertions across six test files**, TypeScript, and production build output. Browser audio remains intentionally excluded from headless sound-output assertions because its explicit user-gesture requirement is part of the feature contract. Run the following before a release:
 
 ```bash
 pnpm test
@@ -112,7 +116,7 @@ pnpm check
 pnpm build
 ```
 
-Visual validation should also inspect the entry sequence, desktop viewport, mobile viewport, reduced-motion mode, high-contrast mode, and non-3D fallback. The release evidence is collected in [MASTERY_AUDIT.md](MASTERY_AUDIT.md) and [RECONSTRUCTION_AUDIT.md](RECONSTRUCTION_AUDIT.md). Concrete authenticated tablet/mobile room captures remain a recommended follow-up; the documented automated captures cover the protected entry shell at four viewport sizes.
+Visual validation should also inspect the entry sequence, desktop viewport, mobile viewport, reduced-motion mode, high-contrast mode, and non-3D fallback. The release evidence is collected in [MASTERY_AUDIT.md](MASTERY_AUDIT.md) and [RECONSTRUCTION_AUDIT.md](RECONSTRUCTION_AUDIT.md). The current pass captured the public threshold at 1440, 1366, 1024, 932×430, 430, 390, and 375 targets and inspected the authenticated rendered world on desktop; a fresh authenticated narrow-screen room capture remains a candid follow-up recommendation.
 
 ## Deployment
 

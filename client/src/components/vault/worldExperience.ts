@@ -2,6 +2,8 @@ import type { RoomId } from "./types";
 
 export type WorldSignal = "dormant" | "awakened" | "resonant" | "mastered";
 export type ObjectInteractionStage = "approach" | "attune" | "retained";
+export type HandsetGuideStage = "attention" | "retain" | "north" | "complete" | "dismissed";
+export type ObservatoryEra = "founding" | "returning";
 
 const objectStateRank: Record<string, number> = { unknown: 0, observed: 1, interacted: 2, discovered: 3, understood: 4, unlocked: 5, mastered: 6 };
 
@@ -45,4 +47,17 @@ export function getChamberGuidance(signal: WorldSignal, isReturnVisit: boolean) 
   if (signal === "resonant") return `${remembered}The Echo is understood. Follow the suspended resonance.`;
   if (signal === "awakened") return `${remembered}The Prism left a reply in the west buttress. Seek the Echo Sigil.`;
   return `${remembered}Approach the unresolved Prism. Its first response is quiet.`;
+}
+
+export function getHandsetGuide(stage: HandsetGuideStage, prismState: string | undefined, observatoryUnlocked: boolean, establishedVisitor: boolean) {
+  if (stage === "complete" || stage === "dismissed" || establishedVisitor) return null;
+  const prismRank = objectStateRank[prismState ?? "unknown"] ?? 0;
+  if (prismRank < objectStateRank.observed) return { stage: "attention" as const, marker: "1 / 3", prompt: "Attend the datum. Touch the Memory Prism and wait for its answer.", actionLabel: "Attend the Prism" };
+  if (prismRank < objectStateRank.discovered) return { stage: "retain" as const, marker: "2 / 3", prompt: "Retain the signal. Attend the Prism again to keep its route.", actionLabel: "Retain the signal" };
+  if (observatoryUnlocked) return { stage: "north" as const, marker: "3 / 3", prompt: "Trace north. Enter THE OBSERVATORY; the record will take a second form.", actionLabel: "Enter Observatory" };
+  return null;
+}
+
+export function canReadReturningRegister(discoveryCount: number) {
+  return discoveryCount >= 2;
 }

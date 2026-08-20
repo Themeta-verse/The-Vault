@@ -9,6 +9,7 @@ import {
   objectRelationships,
   rooms,
   userActions,
+  userArtifactFragments,
   userCreations,
   userObjectStates,
   userRoomStates,
@@ -43,12 +44,12 @@ const OBJECT_BLUEPRINT = [
 ] as const;
 
 const ARTIFACT_BLUEPRINT = [
-  { id: "artifact-memory-prism", objectId: "object-memory-prism", title: "Memory Prism", subtitle: "First instrument of the Observatory", description: "The prism translates attention into a map. It was made for people who notice what rooms attempt to hide.", category: "Mnemonic instrument", accent: "#cdb992" },
-  { id: "artifact-echo-sigil", objectId: "object-echo-sigil", title: "Echo Sigil", subtitle: "A coordinate beneath the chamber", description: "The sigil was not hidden. It waited for the chamber to have something worth reflecting back to you.", category: "Latent inscription", accent: "#8eb19d" },
-  { id: "artifact-resonance-needle", objectId: "object-resonance-needle", title: "Resonance Needle", subtitle: "A reward for joining memory to creation", description: "The needle points not to a place, but to the relationship between what you noticed and what you chose to make of it.", category: "Relational instrument", accent: "#b889d1" },
-  { id: "artifact-palimpsest-lens", objectId: "object-palimpsest-lens", title: "Palimpsest Lens", subtitle: "Archive instrument for layered records", description: "The lens draws a second line through any memory you have already kept. In its glass, the Prism's signal becomes a readable margin.", category: "Archive optic", accent: "#d2b879" },
-  { id: "artifact-quiet-cistern", objectId: "object-quiet-cistern", title: "Quiet Cistern", subtitle: "Lab vessel for unfinished signals", description: "The cistern does not answer a question. It removes the noise around it until the next relationship can be heard.", category: "Resonant vessel", accent: "#8db9b2" },
-  { id: "artifact-astral-index", objectId: "object-astral-index", title: "Astral Index", subtitle: "Observatory register of carried discoveries", description: "Each entry is a route made deliberate: a record moved from attention to understanding, then carried somewhere else.", category: "Living register", accent: "#9fb9e3" },
+  { id: "artifact-memory-prism", objectId: "object-memory-prism", title: "Memory Prism", subtitle: "First instrument of the Observatory", description: "The prism translates attention into a map. It was made for people who notice what rooms attempt to hide.", category: "Mnemonic instrument", accent: "#cdb992", fragmentTitle: "The note that looked back", fragmentEra: "THE FIRST REGISTER · FOLIO 04", fragmentBody: "At first the instrument was mistaken for a light. Only later did the keepers understand that it had been waiting for a witness, not a hand." },
+  { id: "artifact-echo-sigil", objectId: "object-echo-sigil", title: "Echo Sigil", subtitle: "A coordinate beneath the chamber", description: "The sigil was not hidden. It waited for the chamber to have something worth reflecting back to you.", category: "Latent inscription", accent: "#8eb19d", fragmentTitle: "West buttress annotation", fragmentEra: "THE FIRST REGISTER · MARGIN 11", fragmentBody: "The mark does not repeat a voice. It returns the shape of attention after attention has left the room." },
+  { id: "artifact-resonance-needle", objectId: "object-resonance-needle", title: "Resonance Needle", subtitle: "A reward for joining memory to creation", description: "The needle points not to a place, but to the relationship between what you noticed and what you chose to make of it.", category: "Relational instrument", accent: "#b889d1", fragmentTitle: "Instruction for a borrowed compass", fragmentEra: "THE RETURNING REGISTER · LEAF 03", fragmentBody: "Set it beside a thing you made after noticing. If it turns, the Vault has accepted that the route belongs to you." },
+  { id: "artifact-palimpsest-lens", objectId: "object-palimpsest-lens", title: "Palimpsest Lens", subtitle: "Archive instrument for layered records", description: "The lens draws a second line through any memory you have already kept. In its glass, the Prism's signal becomes a readable margin.", category: "Archive optic", accent: "#d2b879", fragmentTitle: "A second hand in the margin", fragmentEra: "THE RETURNING REGISTER · SHELF 02", fragmentBody: "A record is never alone. Hold the Lens near an older line and a prior keeper may briefly appear as an omission." },
+  { id: "artifact-quiet-cistern", objectId: "object-quiet-cistern", title: "Quiet Cistern", subtitle: "Lab vessel for unfinished signals", description: "The cistern does not answer a question. It removes the noise around it until the next relationship can be heard.", category: "Resonant vessel", accent: "#8db9b2", fragmentTitle: "Water without an echo", fragmentEra: "THE RETURNING REGISTER · VESSEL 07", fragmentBody: "Do not ask the water to decide. Give it the unfinished part, and listen for what remains when the answer has stopped performing itself." },
+  { id: "artifact-astral-index", objectId: "object-astral-index", title: "Astral Index", subtitle: "Observatory register of carried discoveries", description: "Each entry is a route made deliberate: a record moved from attention to understanding, then carried somewhere else.", category: "Living register", accent: "#9fb9e3", fragmentTitle: "Index of returning lights", fragmentEra: "THE RETURNING REGISTER · ORBIT 19", fragmentBody: "The newest marks are not stars. They are passages that became visible only after someone carried one room's memory into another." },
 ] as const;
 
 const RELATIONSHIP_BLUEPRINT = [
@@ -133,7 +134,7 @@ export async function ensureVaultBlueprint(userId: number) {
   await Promise.all(
     OBJECT_BLUEPRINT.map(object => db.insert(vaultObjects).values(object).onDuplicateKeyUpdate({ set: { name: object.name, description: object.description, interactionHint: object.interactionHint, accessibleLabel: object.accessibleLabel, unlocksRoomId: object.unlocksRoomId } })),
   );
-  await Promise.all(ARTIFACT_BLUEPRINT.map(artifact => db.insert(artifacts).values(artifact).onDuplicateKeyUpdate({ set: { title: artifact.title, subtitle: artifact.subtitle, description: artifact.description, category: artifact.category, accent: artifact.accent } })));
+  await Promise.all(ARTIFACT_BLUEPRINT.map(artifact => db.insert(artifacts).values(artifact).onDuplicateKeyUpdate({ set: { title: artifact.title, subtitle: artifact.subtitle, description: artifact.description, category: artifact.category, accent: artifact.accent, fragmentTitle: artifact.fragmentTitle, fragmentEra: artifact.fragmentEra, fragmentBody: artifact.fragmentBody } })));
   await Promise.all(RELATIONSHIP_BLUEPRINT.map(relationship => db.insert(objectRelationships).values(relationship).onDuplicateKeyUpdate({ set: { label: relationship.label, requiredSourceState: relationship.requiredSourceState } })));
 
   await Promise.all(
@@ -150,7 +151,7 @@ export async function getVaultState(userId: number) {
   await ensureVaultBlueprint(userId);
   const db = await getDb();
   if (!db) throw new Error("The Vault's memory is temporarily unavailable.");
-  const [roomList, objectList, artifactList, roomStates, discoveryList, objectStates, relationshipList, historyList, noteList, creationList, settings] = await Promise.all([
+  const [roomList, objectList, artifactList, roomStates, discoveryList, objectStates, relationshipList, historyList, noteList, creationList, fragmentList, settings] = await Promise.all([
     db.select().from(rooms).orderBy(rooms.sortOrder),
     db.select().from(vaultObjects),
     db.select().from(artifacts),
@@ -161,8 +162,17 @@ export async function getVaultState(userId: number) {
     db.select().from(vaultHistory).where(eq(vaultHistory.userId, userId)).orderBy(desc(vaultHistory.createdAt)).limit(100),
     db.select().from(experimentNotes).where(eq(experimentNotes.userId, userId)).orderBy(desc(experimentNotes.updatedAt)),
     db.select().from(userCreations).where(eq(userCreations.userId, userId)).orderBy(desc(userCreations.updatedAt)),
+    db.select().from(userArtifactFragments).where(eq(userArtifactFragments.userId, userId)),
     db.select().from(vaultSettings).where(eq(vaultSettings.userId, userId)).limit(1),
   ]);
+  const existingFragmentIds = new Set(fragmentList.map(fragment => fragment.artifactId));
+  const recoveredFragments = discoveryList
+    .filter(discovery => discovery.artifactId && !existingFragmentIds.has(discovery.artifactId))
+    .map(discovery => ({ userId, artifactId: discovery.artifactId!, discoveredAt: discovery.discoveredAt }));
+  if (recoveredFragments.length > 0) await Promise.all(recoveredFragments.map(fragment => db.insert(userArtifactFragments).values(fragment).onDuplicateKeyUpdate({ set: { userId } })));
+  const fragments = recoveredFragments.length > 0
+    ? await db.select().from(userArtifactFragments).where(eq(userArtifactFragments.userId, userId))
+    : fragmentList;
   const normalizedObjectStates = normalizeDiscoveredObjectStates(objectStates, discoveryList);
   const repairedStates = normalizedObjectStates.filter((entry, index) => entry !== objectStates[index]);
   if (repairedStates.length > 0) {
@@ -170,7 +180,7 @@ export async function getVaultState(userId: number) {
   }
   const objectStateById = new Map(normalizedObjectStates.map(entry => [entry.objectId, entry.state as ObjectState]));
   const relationships = relationshipList.filter(relationship => OBJECT_STATE_RANK[objectStateById.get(relationship.sourceObjectId) ?? "unknown"] >= OBJECT_STATE_RANK[relationship.requiredSourceState as ObjectState]);
-  return { rooms: roomList, objects: objectList, artifacts: artifactList, roomStates, discoveries: discoveryList, objectStates: normalizedObjectStates, relationships, history: historyList, notes: noteList, creations: creationList, settings: settings[0] };
+  return { rooms: roomList, objects: objectList, artifacts: artifactList, roomStates, discoveries: discoveryList, fragments, objectStates: normalizedObjectStates, relationships, history: historyList, notes: noteList, creations: creationList, settings: settings[0] };
 }
 
 async function getObjectState(userId: number, objectId: string) {
@@ -285,6 +295,10 @@ export async function discoverVaultObject(userId: number, objectId: string) {
   await db.insert(discoveries).values({ userId, objectId, artifactId: artifact?.id });
   await advanceObjectState(userId, objectId, "discovered");
   await db.insert(vaultHistory).values({ userId, eventType: "discovery", title: `Discovered: ${object.name}`, detail: object.description, targetId: object.id });
+  if (artifact) {
+    await db.insert(userArtifactFragments).values({ userId, artifactId: artifact.id }).onDuplicateKeyUpdate({ set: { userId } });
+    await db.insert(vaultHistory).values({ userId, eventType: "fragment", title: `Fragment retained: ${artifact.fragmentTitle}`, detail: artifact.fragmentBody, targetId: artifact.id });
+  }
   if (object.unlocksRoomId) {
     await db.update(userRoomStates).set({ isUnlocked: true }).where(and(eq(userRoomStates.userId, userId), eq(userRoomStates.roomId, object.unlocksRoomId)));
     await db.insert(vaultHistory).values({ userId, eventType: "unlock", title: `Threshold unsealed: ${object.unlocksRoomId === "observatory" ? "THE OBSERVATORY" : object.unlocksRoomId}`, detail: "A new room has entered your possible routes.", targetId: object.unlocksRoomId });
@@ -315,12 +329,38 @@ export async function materializeExperiment(userId: number, noteId: number) {
   return creation;
 }
 
-export async function setVaultSettings(userId: number, changes: Partial<{ soundEnabled: boolean; ambientVolume: number; interactionVolume: number; reducedMotion: boolean; highContrast: boolean; preferFallback: boolean; renderQuality: "auto" | "high" | "low"; introSeen: boolean }>) {
+export async function setVaultSettings(userId: number, changes: Partial<{ soundEnabled: boolean; ambientVolume: number; interactionVolume: number; reducedMotion: boolean; highContrast: boolean; preferFallback: boolean; renderQuality: "auto" | "high" | "low"; observatoryEra: "founding" | "returning"; introSeen: boolean }>) {
   await ensureVaultBlueprint(userId);
   const db = await getDb();
   if (!db) throw new Error("Settings could not be saved. Please try again.");
   await db.update(vaultSettings).set(changes).where(eq(vaultSettings.userId, userId));
   await db.insert(vaultHistory).values({ userId, eventType: "setting", title: "Environment preferences updated", detail: "The Vault adapted to your chosen conditions." });
+}
+
+export async function advanceHandsetGuide(userId: number, action: "advance" | "dismiss") {
+  await ensureVaultBlueprint(userId);
+  const db = await getDb();
+  if (!db) throw new Error("The field guide could not retain its place. Please try again.");
+  const [settings] = await db.select().from(vaultSettings).where(eq(vaultSettings.userId, userId)).limit(1);
+  const current = settings?.handsetGuideStage ?? "attention";
+  if (current === "complete" || current === "dismissed") return { stage: current } as const;
+  let stage: "attention" | "retain" | "north" | "complete" | "dismissed" = current;
+  if (action === "dismiss") stage = "dismissed";
+  else if (current === "attention") {
+    const prism = await getObjectState(userId, "object-memory-prism");
+    if (OBJECT_STATE_RANK[(prism?.state ?? "unknown") as ObjectState] >= OBJECT_STATE_RANK.observed) stage = "retain";
+  } else if (current === "retain") {
+    const prism = await getObjectState(userId, "object-memory-prism");
+    if (OBJECT_STATE_RANK[(prism?.state ?? "unknown") as ObjectState] >= OBJECT_STATE_RANK.discovered) stage = "north";
+  } else if (current === "north") {
+    const [observatory] = await db.select().from(userRoomStates).where(and(eq(userRoomStates.userId, userId), eq(userRoomStates.roomId, "observatory"))).limit(1);
+    if (observatory?.firstVisitedAt) stage = "complete";
+  }
+  if (stage !== current) {
+    await db.update(vaultSettings).set({ handsetGuideStage: stage }).where(eq(vaultSettings.userId, userId));
+    await db.insert(vaultHistory).values({ userId, eventType: "setting", title: stage === "dismissed" ? "Handset field guide dismissed" : "Handset field guide advanced", detail: `The guide moved from ${current} to ${stage}.`, targetId: "handset-guide" });
+  }
+  return { stage } as const;
 }
 
 export async function recordVaultAction(userId: number, actionType: string, source: string, targetId?: string, payload?: string) {

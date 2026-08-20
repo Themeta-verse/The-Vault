@@ -7,6 +7,7 @@ const db = vi.hoisted(() => ({
   discoverVaultObject: vi.fn(),
   saveExperimentNote: vi.fn(),
   setVaultSettings: vi.fn(),
+  advanceHandsetGuide: vi.fn(),
   recordVaultAction: vi.fn(),
   getAriaMessages: vi.fn(),
   recordAriaMessage: vi.fn(),
@@ -40,6 +41,7 @@ describe("THE VAULT protected router", () => {
     db.observeVaultObject.mockResolvedValue({ object: { name: "Memory Prism" }, state: "observed" });
     db.understandVaultObject.mockResolvedValue({ state: "understood", unlockedObjectId: "object-resonance-needle" });
     db.materializeExperiment.mockResolvedValue({ id: 12, title: "A Recorded Hypothesis" });
+    db.advanceHandsetGuide.mockResolvedValue({ stage: "retain" });
   });
 
   it("rejects unauthenticated access to persisted Vault state", async () => {
@@ -200,6 +202,29 @@ describe("THE VAULT protected router", () => {
     const caller = appRouter.createCaller(context(user));
     await expect(caller.vault.settings({ ambientVolume: 101 } as never)).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(db.setVaultSettings).not.toHaveBeenCalled();
+  });
+
+  it("persists the selected Observatory register only for the active Vault owner and rejects unknown eras", async () => {
+    const caller = appRouter.createCaller(context(user));
+    await caller.vault.settings({ observatoryEra: "returning" });
+    expect(db.setVaultSettings).toHaveBeenCalledWith(7, { observatoryEra: "returning" });
+    await expect(caller.vault.settings({ observatoryEra: "future" } as never)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("advances the handset field guide only through the active owner’s protected transition", async () => {
+    const caller = appRouter.createCaller(context(user));
+    await expect(caller.vault.advanceHandsetGuide({ action: "advance" })).resolves.toEqual({ stage: "retain" });
+    expect(db.advanceHandsetGuide).toHaveBeenCalledWith(7, "advance");
+    expect(db.recordVaultAction).toHaveBeenCalledWith(7, "advance_handset_guide", "handset_field_strip", "handset-guide", "advance");
+    await expect(caller.vault.advanceHandsetGuide({ action: "skip" } as never)).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("returns authored fragments and their collected owner-scoped records through the protected state route", async () => {
+    db.getVaultState.mockResolvedValue({ discoveries: [], rooms: [], roomStates: [], notes: [], creations: [], settings: undefined, objectStates: [], relationships: [], fragments: [{ id: 18, artifactId: "artifact-memory-prism", discoveredAt: new Date("2026-08-20T00:00:00.000Z") }], artifacts: [{ id: "artifact-memory-prism", fragmentTitle: "The note that looked back", fragmentEra: "THE FIRST REGISTER · FOLIO 04", fragmentBody: "It waited for a witness." }] });
+    const caller = appRouter.createCaller(context(user));
+    const state = await caller.vault.state();
+    expect(state.artifacts[0]).toMatchObject({ fragmentTitle: "The note that looked back", fragmentEra: expect.stringContaining("FIRST REGISTER"), fragmentBody: expect.stringContaining("witness") });
+    expect(state.fragments).toEqual([expect.objectContaining({ artifactId: "artifact-memory-prism" })]);
   });
 
   it("accepts authored relationship-branch objects through the same owner-scoped discovery contract", async () => {
