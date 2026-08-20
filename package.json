@@ -8,12 +8,18 @@
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
-    "lint": "prettier --check package.json .github/workflows/ci.yml server/_core/health.ts server/health.test.ts",
+    "lint": "prettier --check package.json .github/workflows/ci.yml .github/workflows/recovery-validation.yml server/_core/authProvider.ts server/_core/env.ts server/_core/oauth.ts server/_core/sdk.ts server/_core/storageProxy.ts server/_core/health.ts server/health.test.ts server/storage.ts server/staging.preflight.test.ts server/portable-adapters.test.ts scripts/staging/preflight.mts scripts/staging/migrate.mts scripts/staging/failure-drill.mts scripts/recovery/export-rds.mts scripts/recovery/validate-rds.mts shared/const.ts",
     "format": "prettier --write .",
     "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "staging:preflight": "tsx scripts/staging/preflight.mts",
+    "staging:migrate": "tsx scripts/staging/migrate.mts",
+    "staging:failure-drill": "tsx scripts/staging/failure-drill.mts",
+    "recovery:export": "tsx scripts/recovery/export-rds.mts",
+    "recovery:validate": "tsx scripts/recovery/validate-rds.mts"
   },
   "dependencies": {
+    "@aws-sdk/client-rds": "^3.693.0",
     "@aws-sdk/client-s3": "^3.693.0",
     "@aws-sdk/s3-request-presigner": "^3.693.0",
     "@hookform/resolvers": "^5.2.2",

@@ -129,3 +129,10 @@
 - [x] Add GitHub Actions CI for frozen install, formatting lint, typecheck, tests, and production build.
 - [x] Record the managed `.env.example` path restriction and preserve a safe Git-tracked configuration template with no real values.
 - [x] Attempt supported workspace migration for obsolete package-level pnpm overrides and patch metadata; retain the existing lockfile-compatible metadata after the current frozen lockfile rejected the workspace form, and record the warning as a non-blocking maintenance follow-up.
+- [x] Define the staging database contract, isolated credentials, migration rehearsal process, and disposable failure-injection workflow without touching production data.
+- [x] Add environment-aware database configuration and safe staging migration/resilience commands with focused regression coverage.
+- [x] Replace Manus OAuth coupling with a configuration-gated standards-based OAuth/OIDC adapter while preserving user identity and authorization boundaries; live Cognito activation awaits account-owner configuration.
+- [x] Replace Forge object-storage coupling with a configuration-gated S3-compatible storage adapter and explicit migration/export controls; live bucket and IAM activation await account-owner configuration.
+- [x] Implement a scheduled recovery-artifact export and validation workflow that records checksums, freshness, and restore-readiness without storing credentials in the repository; its production run awaits AWS/GitHub OIDC configuration.
+- [x] Update operational documentation, validate independent-deployment controls, checkpoint the changes, and synchronize GitHub main.
+- [x] Implement the AWS-centered target configuration seam: RDS MySQL staging isolation, Cognito-compatible OIDC settings, S3-compatible object storage, and a credential-free deployment handoff; account-level provisioning remains externally gated.

@@ -1,0 +1,60 @@
+name: RDS recovery export and validation
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  RDS_PRODUCTION_INSTANCE_ID: ${{ vars.RDS_PRODUCTION_INSTANCE_ID }}
+  RECOVERY_ARTIFACT_BUCKET: ${{ vars.RECOVERY_ARTIFACT_BUCKET }}
+  RDS_EXPORT_ROLE_ARN: ${{ vars.RDS_EXPORT_ROLE_ARN }}
+  RDS_EXPORT_KMS_KEY_ID: ${{ vars.RDS_EXPORT_KMS_KEY_ID }}
+  RECOVERY_MAX_AGE_HOURS: ${{ vars.RECOVERY_MAX_AGE_HOURS }}
+
+jobs:
+  export-rds-recovery:
+    name: Start an RDS snapshot export
+    runs-on: ubuntu-latest
+    environment: production-recovery
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_RECOVERY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: pnpm recovery:export
+
+  validate-prior-recovery-export:
+    name: Validate the newest completed recovery export
+    needs: export-rds-recovery
+    runs-on: ubuntu-latest
+    environment: production-recovery
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_RECOVERY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: pnpm recovery:validate
