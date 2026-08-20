@@ -108,12 +108,12 @@
 - [x] Build the world-native handset field strip, persistent Observatory register dial, and held-artifact fragment surfaces with accessible action equivalents and focused progression tests.
 - [x] Add focused regression coverage and validate responsive progression, timeline persistence, fragment access, fallback behavior, TypeScript, and production build with 39 assertions across six files.
 - [x] Update README, HANDSET_CHRONICLE_DESIGN.md, and MASTERY_AUDIT.md with the handset guide, Observatory register, fragment collection, validation evidence, and explicit authenticated-mobile boundary.
-- [ ] Save the expanded release checkpoint, commit the final state, synchronize GitHub main, and verify the remote head.
+- [x] Save the expanded release checkpoint, commit the final state, synchronize GitHub main, and verify the matching remote head at b1e48b327a37487d31f23a3bbfa54b00c7be757d.
 - [x] Add a durable, owner-scoped fragment collection record for each discovered artifact, with a migration, auditable Vault-history entry, legacy discovery recovery, and shared state response across Archive, Observatory, and ARIA.
 - [x] Verify the guided handset flow’s touch-first stage contract, fallback actions, and reduced-motion compatibility through pure regressions, authenticated desktop context review, and responsive source review; a newly captured authenticated narrow-screen walkthrough remains an honest follow-up limitation.
 - [x] Verify the two Observatory registers are semantically distinct, spatially legible, performance-bounded, and accessible without becoming a dashboard; the authenticated first-register lock state and shared-state narration were inspected, while returned-register availability is covered by pure progression tests.
 - [x] Run the requested public desktop, tablet, portrait, and landscape responsive QA matrix at 1440, 1366, 1024, 932×430, 430, 390, and 375 targets; no visible clipping or hierarchy break appeared in those registration-threshold captures, and post-restart authenticated desktop logs contained no failed requests.
-- [ ] Perform a final Git remote, clean-tree, commit, push, and remote-head verification for the dedicated THE VAULT repository.
+- [x] Perform a final Git remote, clean-tree, commit, push, and remote-head verification for the dedicated THE VAULT repository; local and `github/main` both resolve to b1e48b327a37487d31f23a3bbfa54b00c7be757d.
 - [x] Run a fresh complete validation pass after the transformation and state-reconciliation changes, covering 34 Vitest assertions across six files, TypeScript, and the production build.
 - [x] Verify and document the transformed reduced-motion, audio opt-in, failure-state, security, and performance behavior without overstating browser-audio automation.
 - [x] Verify the reduced-motion control in the authenticated transformed world and restore the owner’s original preference afterward.
