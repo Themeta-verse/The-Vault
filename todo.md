@@ -101,7 +101,7 @@
 - [x] Refine THE ARCHIVE, THE LAB, THE OBSERVATORY, and ARIA into authored record, listening-aperture, mnemonic-armature, and contained-intelligence interactions without reintroducing dashboard, chat-widget, or generic-panel patterns.
 - [x] Improve and verify the world’s responsive, mobile, keyboard, reduced-motion, fallback, audio, performance, security, and failure-state behavior without weakening existing persistence or authorization; the non-3D route map, restored rendered world, mobile threshold, and Escape folio release were checked in the authenticated preview.
 - [x] Add focused regression coverage, conduct documented visual and runtime validation, and update release documentation for the Cartographic Reliquary transformation.
-- [ ] Save the transformation checkpoint and synchronize the published release with GitHub main.
+- [x] Save the transformation checkpoint and synchronize the published release with GitHub main at commit 95cfbc312ed5606d72772cf4ab55d8d3ce8a770e.
 - [x] Run a fresh complete validation pass after the transformation and state-reconciliation changes, covering 34 Vitest assertions across six files, TypeScript, and the production build.
 - [x] Verify and document the transformed reduced-motion, audio opt-in, failure-state, security, and performance behavior without overstating browser-audio automation.
 - [x] Verify the reduced-motion control in the authenticated transformed world and restore the owner’s original preference afterward.
