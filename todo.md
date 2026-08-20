@@ -122,8 +122,8 @@
 - [x] Create `/docs/ARCHITECTURE.md` describing the real request, authentication, authorization, persistence, AI, deployment, and error flows, including clear ownership and replaceability boundaries.
 - [x] Create `/docs/DATABASE.md` documenting the real provider/technology posture, schema, relationships, ownership, constraints, migrations, environment separation, backup/recovery limitations, and data-isolation controls.
 - [x] Audit and safely update `.env.example`, repository configuration, health visibility, error handling, logging guidance, and operational scripts where supported by the actual runtime; the managed `.env.example` restriction is recorded with a safe tracked alternative.
-- [ ] Verify reproducibility, migration integrity, critical-write safety, user-data isolation, dependency ownership, clean GitHub synchronization, and explicitly document unmanaged or Manus-controlled limitations.
-- [ ] Update ownership documentation, validate all code and operational checks, checkpoint the infrastructure-control pass, and synchronize GitHub main.
+- [x] Verify reproducibility, migration integrity, critical-write safety, user-data isolation, dependency ownership, clean GitHub synchronization, and explicitly document unmanaged or Manus-controlled limitations.
+- [x] Update ownership documentation, validate all code and operational checks, checkpoint the infrastructure-control pass, and synchronize GitHub main.
 - [x] Add an unauthenticated HTTP health endpoint that distinguishes application readiness from database availability without exposing configuration.
 - [x] Make the critical discovery persistence path transactional and cover its atomic failure boundary with a focused regression test.
 - [x] Add GitHub Actions CI for frozen install, formatting lint, typecheck, tests, and production build.
